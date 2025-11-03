@@ -8,6 +8,7 @@ from bookmarks.services import auto_tagging
 from bookmarks.services import tasks
 from bookmarks.services import website_loader
 from bookmarks.services.tags import get_or_create_tags
+from extension import extract_douyin_links
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ def create_bookmark(
     ).first()
 
     if existing_bookmark is not None:
+        if extract_douyin_links(bookmark.url):
+            bookmark.url = extract_douyin_links(bookmark.url)
         _merge_bookmark_data(bookmark, existing_bookmark)
         return update_bookmark(existing_bookmark, tag_string, current_user)
 
