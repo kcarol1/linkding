@@ -8,7 +8,7 @@ from bookmarks.services import auto_tagging
 from bookmarks.services import tasks
 from bookmarks.services import website_loader
 from bookmarks.services.tags import get_or_create_tags
-from extension import extract_douyin_links
+from bookmarks.services.extension import extract_douyin_links
 
 logger = logging.getLogger(__name__)
 
