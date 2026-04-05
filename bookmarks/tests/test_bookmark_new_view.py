@@ -1,7 +1,9 @@
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 
 from bookmarks.models import Bookmark
+from bookmarks.services import website_loader
 from bookmarks.tests.helpers import BookmarkFactoryMixin
 
 
@@ -96,6 +98,23 @@ class BookmarkNewViewTestCase(TestCase, BookmarkFactoryMixin):
 
         bookmark = Bookmark.objects.first()
         self.assertEqual(bookmark.url, "https://v.douyin.com/0IglwfEROpY/")
+
+    def test_should_fetch_website_metadata_after_create(self):
+        form_data = self.create_form_data({"title": "", "description": ""})
+
+        with patch.object(website_loader, "load_website_metadata") as mock_load:
+            mock_load.return_value = website_loader.WebsiteMetadata(
+                url=form_data["url"],
+                title="Fetched title",
+                description="Fetched description",
+                preview_image=None,
+            )
+
+            self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.get()
+        self.assertEqual(bookmark.title, "Fetched title")
+        self.assertEqual(bookmark.description, "Fetched description")
 
     def test_should_prefill_url_from_url_parameter(self):
         response = self.client.get(

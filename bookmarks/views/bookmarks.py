@@ -24,6 +24,7 @@ from bookmarks.services.bookmarks import (
     archive_bookmarks,
     create_html_snapshots,
     delete_bookmarks,
+    enhance_with_website_metadata,
     mark_bookmarks_as_read,
     mark_bookmarks_as_unread,
     refresh_bookmarks_metadata,
@@ -222,7 +223,9 @@ def convert_tag_string(tag_string: str):
 def new(request: HttpRequest):
     form = BookmarkForm(request)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        bookmark = form.save()
+        # 网页端保存成功后也补一次站点元数据抓取，和 API 创建行为保持一致。
+        enhance_with_website_metadata(bookmark)
         if form.is_auto_close:
             return HttpResponseRedirect(reverse("linkding:bookmarks.close"))
         else:
@@ -243,7 +246,9 @@ def edit(request: HttpRequest, bookmark_id: int):
     )
 
     if request.method == "POST" and form.is_valid():
-        form.save()
+        bookmark = form.save()
+        # 编辑后如果标题或描述仍为空，也尝试用最新 URL 重新补全元数据。
+        enhance_with_website_metadata(bookmark)
         return HttpResponseRedirect(return_url)
 
     status = 422 if request.method == "POST" and not form.is_valid() else 200
