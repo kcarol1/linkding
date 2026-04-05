@@ -1,7 +1,10 @@
 services:
   linkding:
     container_name: "${LD_CONTAINER_NAME:-linkding}"
-    image: sissbruecker/linkding:latest
+    image: "${LD_IMAGE_NAME:-linkding-local:latest}"
+    build:
+      context: .
+      dockerfile: docker/default.Dockerfile
     ports:
       - "${LD_HOST_PORT:-9090}:9090"
     volumes:
