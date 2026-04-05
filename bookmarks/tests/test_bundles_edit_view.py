@@ -1,11 +1,11 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from bookmarks.models import BookmarkBundle
 from bookmarks.tests.helpers import BookmarkFactoryMixin
 
 
 class BundleEditViewTestCase(TestCase, BookmarkFactoryMixin):
-
     def setUp(self) -> None:
         user = self.get_or_create_test_user()
         self.client.force_login(user)
@@ -19,6 +19,8 @@ class BundleEditViewTestCase(TestCase, BookmarkFactoryMixin):
             "any_tags": "tag1 tag2",
             "all_tags": "required-tag",
             "excluded_tags": "excluded-tag",
+            "filter_unread": BookmarkBundle.FILTER_STATE_YES,
+            "filter_shared": BookmarkBundle.FILTER_STATE_NO,
         }
         return {**form_data, **overrides}
 
@@ -39,6 +41,8 @@ class BundleEditViewTestCase(TestCase, BookmarkFactoryMixin):
         self.assertEqual(bundle.any_tags, updated_data["any_tags"])
         self.assertEqual(bundle.all_tags, updated_data["all_tags"])
         self.assertEqual(bundle.excluded_tags, updated_data["excluded_tags"])
+        self.assertEqual(bundle.filter_unread, updated_data["filter_unread"])
+        self.assertEqual(bundle.filter_shared, updated_data["filter_shared"])
 
     def test_should_render_edit_form_with_prefilled_fields(self):
         bundle = self.setup_bundle(
@@ -47,6 +51,8 @@ class BundleEditViewTestCase(TestCase, BookmarkFactoryMixin):
             any_tags="tag1 tag2 tag3",
             all_tags="required-tag all-tag",
             excluded_tags="excluded-tag banned-tag",
+            filter_unread=BookmarkBundle.FILTER_STATE_YES,
+            filter_shared=BookmarkBundle.FILTER_STATE_NO,
         )
 
         response = self.client.get(reverse("linkding:bundles.edit", args=[bundle.id]))
@@ -55,37 +61,68 @@ class BundleEditViewTestCase(TestCase, BookmarkFactoryMixin):
         html = response.content.decode()
 
         self.assertInHTML(
-            f'<input type="text" name="name" value="{bundle.name}" '
-            'autocomplete="off" placeholder=" " class="form-input" '
-            'maxlength="256" required id="id_name">',
+            f"""
+                <input type="text" name="name" value="{bundle.name}"
+                autocomplete="off" class="form-input"
+                maxlength="256" aria-invalid="false" required id="id_name">
+            """,
             html,
         )
 
         self.assertInHTML(
-            f'<input type="text" name="search" value="{bundle.search}" '
-            'autocomplete="off" placeholder=" " class="form-input" '
-            'maxlength="256" id="id_search">',
+            f"""
+                <input type="text" name="search" value="{bundle.search}"
+                autocomplete="off" class="form-input"
+                maxlength="256" aria-describedby="id_search_help" id="id_search">
+            """,
             html,
         )
 
         self.assertInHTML(
-            f'<input type="text" name="any_tags" value="{bundle.any_tags}" '
-            'autocomplete="off" autocapitalize="off" class="form-input" '
-            'maxlength="1024" id="id_any_tags">',
+            f"""
+                <ld-tag-autocomplete input-name="any_tags" input-value="{bundle.any_tags}"
+                input-aria-describedby="id_any_tags_help" input-id="id_any_tags">
+            """,
             html,
         )
 
         self.assertInHTML(
-            f'<input type="text" name="all_tags" value="{bundle.all_tags}" '
-            'autocomplete="off" autocapitalize="off" class="form-input" '
-            'maxlength="1024" id="id_all_tags">',
+            f"""
+                <ld-tag-autocomplete input-name="all_tags" input-value="{bundle.all_tags}"
+                input-aria-describedby="id_all_tags_help" input-id="id_all_tags">
+            """,
             html,
         )
 
         self.assertInHTML(
-            f'<input type="text" name="excluded_tags" value="{bundle.excluded_tags}" '
-            'autocomplete="off" autocapitalize="off" class="form-input" '
-            'maxlength="1024" id="id_excluded_tags">',
+            f"""
+                <ld-tag-autocomplete input-name="excluded_tags" input-value="{bundle.excluded_tags}"
+                input-aria-describedby="id_excluded_tags_help" input-id="id_excluded_tags">
+            """,
+            html,
+        )
+
+        self.assertInHTML(
+            """
+                <select name="filter_unread" class="form-select"
+                aria-describedby="id_filter_unread_help" id="id_filter_unread">
+                    <option value="off">All</option>
+                    <option value="yes" selected>Unread</option>
+                    <option value="no">Read</option>
+                </select>
+            """,
+            html,
+        )
+
+        self.assertInHTML(
+            """
+                <select name="filter_shared" class="form-select"
+                aria-describedby="id_filter_shared_help" id="id_filter_shared">
+                    <option value="off">All</option>
+                    <option value="yes">Shared</option>
+                    <option value="no" selected>Unshared</option>
+                </select>
+            """,
             html,
         )
 

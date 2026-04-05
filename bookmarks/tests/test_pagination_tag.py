@@ -1,14 +1,18 @@
 from django.core.paginator import Paginator
-from django.template import Template, RequestContext
-from django.test import TestCase, RequestFactory
+from django.template import RequestContext, Template
+from django.test import RequestFactory, TestCase
 
 from bookmarks.tests.helpers import BookmarkFactoryMixin
 
 
 class PaginationTagTest(TestCase, BookmarkFactoryMixin):
-
     def render_template(
-        self, num_items: int, page_size: int, current_page: int, url: str = "/test"
+        self,
+        num_items: int,
+        page_size: int,
+        current_page: int,
+        url: str = "/test",
+        frame: str = None,
     ) -> str:
         rf = RequestFactory()
         request = rf.get(url)
@@ -17,8 +21,12 @@ class PaginationTagTest(TestCase, BookmarkFactoryMixin):
         paginator = Paginator(range(0, num_items), page_size)
         page = paginator.page(current_page)
 
-        context = RequestContext(request, {"page": page})
-        template_to_render = Template("{% load pagination %}" "{% pagination page %}")
+        context_dict = {"page": page}
+        if frame:
+            context_dict["pagination_frame"] = frame
+        context = RequestContext(request, context_dict)
+
+        template_to_render = Template("{% load pagination %}{% pagination page %}")
         return template_to_render.render(context)
 
     def assertPrevLinkDisabled(self, html: str):
@@ -31,16 +39,16 @@ class PaginationTagTest(TestCase, BookmarkFactoryMixin):
             html,
         )
 
-    def assertPrevLink(self, html: str, page_number: int, href: str = None):
-        href = href if href else "/test?page={0}".format(page_number)
+    def assertPrevLink(
+        self, html: str, page_number: int, href: str = None, frame: str = "_top"
+    ):
+        href = href if href else f"/test?page={page_number}"
         self.assertInHTML(
-            """
+            f"""
             <li class="page-item">
-                <a href="{0}" tabindex="-1">Previous</a>
+                <a href="{href}" tabindex="-1" data-turbo-frame="{frame}">Previous</a>
             </li>
-            """.format(
-                href
-            ),
+            """,
             html,
         )
 
@@ -54,16 +62,16 @@ class PaginationTagTest(TestCase, BookmarkFactoryMixin):
             html,
         )
 
-    def assertNextLink(self, html: str, page_number: int, href: str = None):
-        href = href if href else "/test?page={0}".format(page_number)
+    def assertNextLink(
+        self, html: str, page_number: int, href: str = None, frame: str = "_top"
+    ):
+        href = href if href else f"/test?page={page_number}"
         self.assertInHTML(
-            """
+            f"""
             <li class="page-item">
-                <a href="{0}" tabindex="-1">Next</a>
+                <a href="{href}" tabindex="-1" data-turbo-frame="{frame}">Next</a>
             </li>
-            """.format(
-                href
-            ),
+            """,
             html,
         )
 
@@ -74,17 +82,16 @@ class PaginationTagTest(TestCase, BookmarkFactoryMixin):
         active: bool,
         count: int = 1,
         href: str = None,
+        frame: str = "_top",
     ):
         active_class = "active" if active else ""
-        href = href if href else "/test?page={0}".format(page_number)
+        href = href if href else f"/test?page={page_number}"
         self.assertInHTML(
-            """
-            <li class="page-item {1}">
-                <a href="{2}">{0}</a>
+            f"""
+            <li class="page-item {active_class}">
+                <a href="{href}" data-turbo-frame="{frame}">{page_number}</a>
             </li>
-            """.format(
-                page_number, active_class, href
-            ),
+            """,
             html,
             count=count,
         )
@@ -195,3 +202,10 @@ class PaginationTagTest(TestCase, BookmarkFactoryMixin):
         self.assertPageLink(rendered_template, 1, False, href="/test?page=1")
         self.assertPageLink(rendered_template, 2, True, href="/test?page=2")
         self.assertNextLink(rendered_template, 3, href="/test?page=3")
+
+    def test_respects_pagination_frame(self):
+        rendered_template = self.render_template(100, 10, 2, frame="my_frame")
+        self.assertPrevLink(rendered_template, 1, frame="my_frame")
+        self.assertPageLink(rendered_template, 1, False, frame="my_frame")
+        self.assertPageLink(rendered_template, 2, True, frame="my_frame")
+        self.assertNextLink(rendered_template, 3, frame="my_frame")

@@ -8,23 +8,22 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import prefetch_related_objects
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework.authtoken.models import Token
 
+from bookmarks.forms import GlobalSettingsForm, UserProfileForm
 from bookmarks.models import (
+    ApiToken,
     Bookmark,
-    UserProfileForm,
     FeedToken,
     GlobalSettings,
-    GlobalSettingsForm,
 )
-from bookmarks.services import exporter, tasks
-from bookmarks.services import importer
+from bookmarks.services import exporter, importer, tasks
 from bookmarks.type_defs import HttpRequest
 from bookmarks.utils import app_version
+from bookmarks.views import access
 
 logger = logging.getLogger(__name__)
 
@@ -168,32 +167,76 @@ def get_ttl_hash(seconds=3600):
 @login_required
 def integrations(request):
     application_url = request.build_absolute_uri(reverse("linkding:bookmarks.new"))
-    api_token = Token.objects.get_or_create(user=request.user)[0]
+
+    api_tokens = ApiToken.objects.filter(user=request.user).order_by("-created")
+    api_token_key = request.session.pop("api_token_key", None)
+    api_token_name = request.session.pop("api_token_name", None)
+    api_success_message = _find_message_with_tag(
+        messages.get_messages(request), "api_success_message"
+    )
+
     feed_token = FeedToken.objects.get_or_create(user=request.user)[0]
-    all_feed_url = request.build_absolute_uri(
-        reverse("linkding:feeds.all", args=[feed_token.key])
-    )
-    unread_feed_url = request.build_absolute_uri(
-        reverse("linkding:feeds.unread", args=[feed_token.key])
-    )
-    shared_feed_url = request.build_absolute_uri(
-        reverse("linkding:feeds.shared", args=[feed_token.key])
-    )
-    public_shared_feed_url = request.build_absolute_uri(
-        reverse("linkding:feeds.public_shared")
-    )
+
+    all_feed_url = reverse("linkding:feeds.all", args=[feed_token.key])
+    unread_feed_url = reverse("linkding:feeds.unread", args=[feed_token.key])
+    shared_feed_url = reverse("linkding:feeds.shared", args=[feed_token.key])
+    public_shared_feed_url = reverse("linkding:feeds.public_shared")
+
     return render(
         request,
         "settings/integrations.html",
         {
             "application_url": application_url,
-            "api_token": api_token.key,
+            "api_tokens": api_tokens,
+            "api_token_key": api_token_key,
+            "api_token_name": api_token_name,
+            "api_success_message": api_success_message,
             "all_feed_url": all_feed_url,
             "unread_feed_url": unread_feed_url,
             "shared_feed_url": shared_feed_url,
             "public_shared_feed_url": public_shared_feed_url,
         },
     )
+
+
+@login_required
+def create_api_token(request):
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        if not name:
+            name = "API Token"
+
+        token = ApiToken(user=request.user, name=name)
+        token.save()
+
+        request.session["api_token_key"] = token.key
+        request.session["api_token_name"] = token.name
+
+        messages.success(
+            request,
+            f'API token "{token.name}" created successfully',
+            "api_success_message",
+        )
+
+        return HttpResponseRedirect(reverse("linkding:settings.integrations"))
+
+    return render(request, "settings/create_api_token_modal.html")
+
+
+@login_required
+def delete_api_token(request):
+    if request.method == "POST":
+        token_id = request.POST.get("token_id")
+        token = access.api_token_write(request, token_id)
+        token_name = token.name
+        token.delete()
+        messages.success(
+            request,
+            f'API token "{token_name}" has been deleted.',
+            "api_success_message",
+        )
+
+    return HttpResponseRedirect(reverse("linkding:settings.integrations"))
 
 
 @login_required
@@ -220,7 +263,7 @@ def bookmark_import(request: HttpRequest):
                 + " bookmarks could not be imported. Please check the logs for more details."
             )
             messages.error(request, err_msg, "settings_error_message")
-    except:
+    except Exception:
         logging.exception("Unexpected error during bookmark import")
         messages.error(
             request,
@@ -249,11 +292,12 @@ def bookmark_export(request: HttpRequest):
         response.write(file_content)
 
         return response
-    except:
-        return render(
+    except Exception:
+        return general(
             request,
-            "settings/general.html",
-            {"export_error": "An error occurred during bookmark export."},
+            context_overrides={
+                "export_error": "An error occurred during bookmark export."
+            },
         )
 
 

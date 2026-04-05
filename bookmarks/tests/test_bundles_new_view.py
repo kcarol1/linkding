@@ -1,13 +1,13 @@
+from urllib.parse import urlencode
+
 from django.test import TestCase
 from django.urls import reverse
-from urllib.parse import urlencode
 
 from bookmarks.models import BookmarkBundle
 from bookmarks.tests.helpers import BookmarkFactoryMixin, HtmlTestMixin
 
 
 class BundleNewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
-
     def setUp(self) -> None:
         user = self.get_or_create_test_user()
         self.client.force_login(user)
@@ -21,6 +21,8 @@ class BundleNewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
             "any_tags": "tag1 tag2",
             "all_tags": "required-tag",
             "excluded_tags": "excluded-tag",
+            "filter_unread": BookmarkBundle.FILTER_STATE_YES,
+            "filter_shared": BookmarkBundle.FILTER_STATE_NO,
         }
         return {**form_data, **overrides}
 
@@ -38,6 +40,8 @@ class BundleNewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
         self.assertEqual(bundle.any_tags, form_data["any_tags"])
         self.assertEqual(bundle.all_tags, form_data["all_tags"])
         self.assertEqual(bundle.excluded_tags, form_data["excluded_tags"])
+        self.assertEqual(bundle.filter_unread, form_data["filter_unread"])
+        self.assertEqual(bundle.filter_shared, form_data["filter_shared"])
 
         self.assertRedirects(response, reverse("linkding:bundles.index"))
 
@@ -84,10 +88,10 @@ class BundleNewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
 
         soup = self.make_soup(response.content.decode())
         search_field = soup.select_one('input[name="search"]')
-        all_tags_field = soup.select_one('input[name="all_tags"]')
+        all_tags_field = soup.select_one('ld-tag-autocomplete[input-name="all_tags"]')
 
         self.assertEqual(search_field.get("value"), "machine learning")
-        self.assertEqual(all_tags_field.get("value"), "python ai")
+        self.assertEqual(all_tags_field.get("input-value"), "python ai")
 
     def test_should_ignore_special_search_commands(self):
         query = "python tutorial !untagged !unread"
@@ -96,20 +100,20 @@ class BundleNewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
 
         soup = self.make_soup(response.content.decode())
         search_field = soup.select_one('input[name="search"]')
-        all_tags_field = soup.select_one('input[name="all_tags"]')
+        all_tags_field = soup.select_one('ld-tag-autocomplete[input-name="all_tags"]')
 
         self.assertEqual(search_field.get("value"), "python tutorial")
-        self.assertIsNone(all_tags_field.get("value"))
+        self.assertEqual(all_tags_field.get("input-value"), "")
 
     def test_should_not_prefill_when_no_query_parameter(self):
         response = self.client.get(reverse("linkding:bundles.new"))
 
         soup = self.make_soup(response.content.decode())
         search_field = soup.select_one('input[name="search"]')
-        all_tags_field = soup.select_one('input[name="all_tags"]')
+        all_tags_field = soup.select_one('ld-tag-autocomplete[input-name="all_tags"]')
 
         self.assertIsNone(search_field.get("value"))
-        self.assertIsNone(all_tags_field.get("value"))
+        self.assertEqual(all_tags_field.get("input-value"), "")
 
     def test_should_not_prefill_when_editing_existing_bundle(self):
         bundle = self.setup_bundle(
@@ -126,10 +130,10 @@ class BundleNewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
 
         soup = self.make_soup(response.content.decode())
         search_field = soup.select_one('input[name="search"]')
-        all_tags_field = soup.select_one('input[name="all_tags"]')
+        all_tags_field = soup.select_one('ld-tag-autocomplete[input-name="all_tags"]')
 
         self.assertEqual(search_field.get("value"), "Tutorial")
-        self.assertEqual(all_tags_field.get("value"), "java spring")
+        self.assertEqual(all_tags_field.get("input-value"), "java spring")
 
     def test_should_show_correct_preview_with_prefilled_values(self):
         bundle_tag = self.setup_tag()

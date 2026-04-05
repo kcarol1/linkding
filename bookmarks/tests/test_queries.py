@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from bookmarks import queries
-from bookmarks.models import BookmarkSearch, UserProfile
+from bookmarks.models import BookmarkBundle, BookmarkSearch, UserProfile
 from bookmarks.tests.helpers import BookmarkFactoryMixin, random_sentence
 from bookmarks.utils import unique
 
@@ -977,10 +977,10 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
         ]
 
         # Unshared bookmarks
-        self.setup_bookmark(user=user1, shared=False, title="test title"),
-        self.setup_bookmark(user=user2, shared=False),
-        self.setup_bookmark(user=user3, shared=False, tags=[tag]),
-        self.setup_bookmark(user=user4, shared=True, tags=[tag]),
+        self.setup_bookmark(user=user1, shared=False, title="test title")
+        self.setup_bookmark(user=user2, shared=False)
+        self.setup_bookmark(user=user3, shared=False, tags=[tag])
+        self.setup_bookmark(user=user4, shared=True, tags=[tag])
 
         # Should return shared bookmarks from all users
         query_set = queries.query_shared_bookmarks(
@@ -1023,20 +1023,14 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
             self.setup_tag(user=user3),
         ]
 
-        self.setup_bookmark(user=user1, shared=True, tags=[shared_tags[0]]),
-        self.setup_bookmark(user=user2, shared=True, tags=[shared_tags[1]]),
-        self.setup_bookmark(user=user3, shared=True, tags=[shared_tags[2]]),
+        self.setup_bookmark(user=user1, shared=True, tags=[shared_tags[0]])
+        self.setup_bookmark(user=user2, shared=True, tags=[shared_tags[1]])
+        self.setup_bookmark(user=user3, shared=True, tags=[shared_tags[2]])
 
-        self.setup_bookmark(
-            user=user1, shared=False, tags=[self.setup_tag(user=user1)]
-        ),
-        self.setup_bookmark(
-            user=user2, shared=False, tags=[self.setup_tag(user=user2)]
-        ),
-        self.setup_bookmark(
-            user=user3, shared=False, tags=[self.setup_tag(user=user3)]
-        ),
-        self.setup_bookmark(user=user4, shared=True, tags=[self.setup_tag(user=user4)]),
+        self.setup_bookmark(user=user1, shared=False, tags=[self.setup_tag(user=user1)])
+        self.setup_bookmark(user=user2, shared=False, tags=[self.setup_tag(user=user2)])
+        self.setup_bookmark(user=user3, shared=False, tags=[self.setup_tag(user=user3)])
+        self.setup_bookmark(user=user4, shared=True, tags=[self.setup_tag(user=user4)])
 
         query_set = queries.query_shared_bookmark_tags(
             None, self.profile, BookmarkSearch(q=""), False
@@ -1051,8 +1045,8 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
         tag1 = self.setup_tag(user=user1)
         tag2 = self.setup_tag(user=user2)
 
-        self.setup_bookmark(user=user1, shared=True, tags=[tag1]),
-        self.setup_bookmark(user=user2, shared=True, tags=[tag2]),
+        self.setup_bookmark(user=user1, shared=True, tags=[tag1])
+        self.setup_bookmark(user=user2, shared=True, tags=[tag2])
 
         query_set = queries.query_shared_bookmark_tags(
             None, self.profile, BookmarkSearch(q=""), True
@@ -1074,15 +1068,15 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
         # Shared bookmarks
         self.setup_bookmark(
             user=users_with_shared_bookmarks[0], shared=True, title="test title"
-        ),
-        self.setup_bookmark(user=users_with_shared_bookmarks[1], shared=True),
+        )
+        self.setup_bookmark(user=users_with_shared_bookmarks[1], shared=True)
 
         # Unshared bookmarks
         self.setup_bookmark(
             user=users_without_shared_bookmarks[0], shared=False, title="test title"
-        ),
-        self.setup_bookmark(user=users_without_shared_bookmarks[1], shared=False),
-        self.setup_bookmark(user=users_without_shared_bookmarks[2], shared=True),
+        )
+        self.setup_bookmark(user=users_without_shared_bookmarks[1], shared=False)
+        self.setup_bookmark(user=users_without_shared_bookmarks[2], shared=True)
 
         # Should return users with shared bookmarks
         query_set = queries.query_shared_bookmark_users(
@@ -1113,25 +1107,25 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
 
         bookmarks = [
             self.setup_bookmark(
-                added=timezone.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2020, 1, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2021, 2, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2021, 2, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2022, 3, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2022, 3, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2023, 4, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2023, 4, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2022, 5, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2022, 5, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2021, 6, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2021, 6, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2020, 7, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2020, 7, 1, tzinfo=datetime.UTC)
             ),
         ]
         sorted_bookmarks = sorted(bookmarks, key=lambda b: b.date_added)
@@ -1144,25 +1138,25 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
 
         bookmarks = [
             self.setup_bookmark(
-                added=timezone.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2020, 1, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2021, 2, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2021, 2, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2022, 3, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2022, 3, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2023, 4, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2023, 4, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2022, 5, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2022, 5, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2021, 6, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2021, 6, 1, tzinfo=datetime.UTC)
             ),
             self.setup_bookmark(
-                added=timezone.datetime(2020, 7, 1, tzinfo=datetime.timezone.utc)
+                added=timezone.datetime(2020, 7, 1, tzinfo=datetime.UTC)
             ),
         ]
         sorted_bookmarks = sorted(bookmarks, key=lambda b: b.date_added, reverse=True)
@@ -1227,11 +1221,11 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
 
         # Modify date field on bookmark directly to test modified_since
         older_bookmark.date_modified = timezone.datetime(
-            2025, 1, 1, tzinfo=datetime.timezone.utc
+            2025, 1, 1, tzinfo=datetime.UTC
         )
         older_bookmark.save()
         recent_bookmark.date_modified = timezone.datetime(
-            2025, 5, 15, tzinfo=datetime.timezone.utc
+            2025, 5, 15, tzinfo=datetime.UTC
         )
         recent_bookmark.save()
 
@@ -1264,11 +1258,11 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
         # Create bookmarks with different dates
         older_bookmark = self.setup_bookmark(
             title="old bookmark",
-            added=timezone.datetime(2025, 1, 1, tzinfo=datetime.timezone.utc),
+            added=timezone.datetime(2025, 1, 1, tzinfo=datetime.UTC),
         )
         recent_bookmark = self.setup_bookmark(
             title="recent bookmark",
-            added=timezone.datetime(2025, 5, 15, tzinfo=datetime.timezone.utc),
+            added=timezone.datetime(2025, 5, 15, tzinfo=datetime.UTC),
         )
 
         # Test with date between the two bookmarks
@@ -1507,6 +1501,89 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
         )
         self.assertQueryResult(query, [matching_bookmarks])
 
+    def test_query_bookmarks_with_bundle_filter_unread(self):
+        unread_bookmarks = [
+            self.setup_bookmark(unread=True),
+            self.setup_bookmark(unread=True),
+        ]
+        read_bookmarks = [
+            self.setup_bookmark(unread=False),
+            self.setup_bookmark(unread=False),
+        ]
+
+        # Filter unread
+        bundle = self.setup_bundle(filter_unread=BookmarkBundle.FILTER_STATE_YES)
+        query = queries.query_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
+        )
+        self.assertQueryResult(query, [unread_bookmarks])
+
+        # Filter read
+        bundle = self.setup_bundle(filter_unread=BookmarkBundle.FILTER_STATE_NO)
+        query = queries.query_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
+        )
+        self.assertQueryResult(query, [read_bookmarks])
+
+        # Filter off
+        bundle = self.setup_bundle(filter_unread=BookmarkBundle.FILTER_STATE_OFF)
+        query = queries.query_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
+        )
+        self.assertQueryResult(query, [unread_bookmarks, read_bookmarks])
+
+    def test_query_bookmarks_with_bundle_filter_shared(self):
+        shared_bookmarks = [
+            self.setup_bookmark(shared=True),
+            self.setup_bookmark(shared=True),
+        ]
+        unshared_bookmarks = [
+            self.setup_bookmark(shared=False),
+            self.setup_bookmark(shared=False),
+        ]
+
+        # Filter shared
+        bundle = self.setup_bundle(filter_shared=BookmarkBundle.FILTER_STATE_YES)
+        query = queries.query_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
+        )
+        self.assertQueryResult(query, [shared_bookmarks])
+
+        # Filter unshared
+        bundle = self.setup_bundle(filter_shared=BookmarkBundle.FILTER_STATE_NO)
+        query = queries.query_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
+        )
+        self.assertQueryResult(query, [unshared_bookmarks])
+
+        # Filter off
+        bundle = self.setup_bundle(filter_shared=BookmarkBundle.FILTER_STATE_OFF)
+        query = queries.query_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
+        )
+        self.assertQueryResult(query, [shared_bookmarks, unshared_bookmarks])
+
+    def test_query_bookmarks_with_bundle_unread_shared_filters_combined(self):
+        bundle = self.setup_bundle(
+            search="python",
+            filter_unread=BookmarkBundle.FILTER_STATE_YES,
+            filter_shared=BookmarkBundle.FILTER_STATE_NO,
+        )
+
+        matching_bookmarks = [
+            self.setup_bookmark(title="Python Tutorial", unread=True, shared=False),
+        ]
+
+        # Bookmarks that should not match
+        self.setup_bookmark(title="Python Guide", unread=False, shared=False)
+        self.setup_bookmark(title="Python Docs", unread=True, shared=True)
+        self.setup_bookmark(title="Java Guide", unread=True, shared=False)
+
+        query = queries.query_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
+        )
+        self.assertQueryResult(query, [matching_bookmarks])
+
     def test_query_archived_bookmarks_with_bundle(self):
         bundle = self.setup_bundle(any_tags="bundleTag1 bundleTag2")
 
@@ -1523,9 +1600,9 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
         # Bookmarks that should not match
         self.setup_bookmark(is_archived=True, tags=[other_tag])
         self.setup_bookmark(is_archived=True)
-        self.setup_bookmark(tags=[tag1]),
-        self.setup_bookmark(tags=[tag2]),
-        self.setup_bookmark(tags=[tag1, tag2]),
+        self.setup_bookmark(tags=[tag1])
+        self.setup_bookmark(tags=[tag2])
+        self.setup_bookmark(tags=[tag1, tag2])
 
         query = queries.query_archived_bookmarks(
             self.user, self.profile, BookmarkSearch(q="", bundle=bundle)
@@ -1551,9 +1628,9 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
         # Bookmarks that should not match
         self.setup_bookmark(user=user1, shared=True, tags=[other_tag])
         self.setup_bookmark(user=user2, shared=True)
-        self.setup_bookmark(user=user1, shared=False, tags=[tag1]),
-        self.setup_bookmark(user=user2, shared=False, tags=[tag2]),
-        self.setup_bookmark(user=user1, shared=False, tags=[tag1, tag2]),
+        self.setup_bookmark(user=user1, shared=False, tags=[tag1])
+        self.setup_bookmark(user=user2, shared=False, tags=[tag2])
+        self.setup_bookmark(user=user1, shared=False, tags=[tag1, tag2])
 
         query = queries.query_shared_bookmarks(
             None, self.profile, BookmarkSearch(q="", bundle=bundle), False
@@ -1571,7 +1648,6 @@ class QueriesLegacySearchTestCase(QueriesBasicTestCase):
 
 
 class QueriesAdvancedSearchTestCase(TestCase, BookmarkFactoryMixin):
-
     def setUp(self):
         self.user = self.get_or_create_test_user()
         self.profile = self.user.profile

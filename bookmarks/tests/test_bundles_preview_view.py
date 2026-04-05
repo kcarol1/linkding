@@ -1,11 +1,11 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from bookmarks.models import BookmarkBundle
 from bookmarks.tests.helpers import BookmarkFactoryMixin, HtmlTestMixin
 
 
 class BundlePreviewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
-
     def setUp(self) -> None:
         user = self.get_or_create_test_user()
         self.client.force_login(user)
@@ -77,7 +77,7 @@ class BundlePreviewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
         response = self.client.get(reverse("linkding:bundles.preview"))
         soup = self.make_soup(response.content.decode())
 
-        list_item = soup.select_one("li[ld-bookmark-item]")
+        list_item = soup.select_one("ul.bookmark-list > li")
         actions = list_item.select(".actions > *")
         self.assertEqual(len(actions), 1)
 
@@ -93,6 +93,68 @@ class BundlePreviewViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
         self.assertContains(response, "Found 1 bookmarks matching this bundle")
         self.assertContains(response, active_bookmark.title)
         self.assertNotContains(response, archived_bookmark.title)
+
+    def test_preview_with_filter_unread(self):
+        unread_bookmark = self.setup_bookmark(title="Unread Bookmark", unread=True)
+        read_bookmark = self.setup_bookmark(title="Read Bookmark", unread=False)
+
+        # Filter unread
+        response = self.client.get(
+            reverse("linkding:bundles.preview"),
+            {"filter_unread": BookmarkBundle.FILTER_STATE_YES},
+        )
+        self.assertContains(response, "Found 1 bookmarks matching this bundle")
+        self.assertContains(response, unread_bookmark.title)
+        self.assertNotContains(response, read_bookmark.title)
+
+        # Filter read
+        response = self.client.get(
+            reverse("linkding:bundles.preview"),
+            {"filter_unread": BookmarkBundle.FILTER_STATE_NO},
+        )
+        self.assertContains(response, "Found 1 bookmarks matching this bundle")
+        self.assertNotContains(response, unread_bookmark.title)
+        self.assertContains(response, read_bookmark.title)
+
+        # Filter off
+        response = self.client.get(
+            reverse("linkding:bundles.preview"),
+            {"filter_unread": BookmarkBundle.FILTER_STATE_OFF},
+        )
+        self.assertContains(response, "Found 2 bookmarks matching this bundle")
+        self.assertContains(response, unread_bookmark.title)
+        self.assertContains(response, read_bookmark.title)
+
+    def test_preview_with_filter_shared(self):
+        shared_bookmark = self.setup_bookmark(title="Shared Bookmark", shared=True)
+        unshared_bookmark = self.setup_bookmark(title="Unshared Bookmark", shared=False)
+
+        # Filter shared
+        response = self.client.get(
+            reverse("linkding:bundles.preview"),
+            {"filter_shared": BookmarkBundle.FILTER_STATE_YES},
+        )
+        self.assertContains(response, "Found 1 bookmarks matching this bundle")
+        self.assertContains(response, shared_bookmark.title)
+        self.assertNotContains(response, unshared_bookmark.title)
+
+        # Filter unshared
+        response = self.client.get(
+            reverse("linkding:bundles.preview"),
+            {"filter_shared": BookmarkBundle.FILTER_STATE_NO},
+        )
+        self.assertContains(response, "Found 1 bookmarks matching this bundle")
+        self.assertNotContains(response, shared_bookmark.title)
+        self.assertContains(response, unshared_bookmark.title)
+
+        # Filter off
+        response = self.client.get(
+            reverse("linkding:bundles.preview"),
+            {"filter_shared": BookmarkBundle.FILTER_STATE_OFF},
+        )
+        self.assertContains(response, "Found 2 bookmarks matching this bundle")
+        self.assertContains(response, shared_bookmark.title)
+        self.assertContains(response, unshared_bookmark.title)
 
     def test_preview_requires_authentication(self):
         self.client.logout()

@@ -5,7 +5,6 @@ import random
 import shutil
 import tempfile
 from datetime import datetime
-from typing import List
 from unittest import TestCase
 
 from bs4 import BeautifulSoup
@@ -14,10 +13,16 @@ from django.test import override_settings
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from bookmarks.models import Bookmark, BookmarkAsset, BookmarkBundle, Tag, User
+from bookmarks.models import (
+    ApiToken,
+    Bookmark,
+    BookmarkAsset,
+    BookmarkBundle,
+    Tag,
+    User,
+)
 
 
 class BookmarkFactoryMixin:
@@ -174,6 +179,8 @@ class BookmarkFactoryMixin:
         any_tags: str = "",
         all_tags: str = "",
         excluded_tags: str = "",
+        filter_unread: str = BookmarkBundle.FILTER_STATE_OFF,
+        filter_shared: str = BookmarkBundle.FILTER_STATE_OFF,
         order: int = 0,
     ):
         if user is None:
@@ -188,6 +195,8 @@ class BookmarkFactoryMixin:
             any_tags=any_tags,
             all_tags=all_tags,
             excluded_tags=excluded_tags,
+            filter_unread=filter_unread,
+            filter_shared=filter_shared,
             order=order,
         )
         bundle.save()
@@ -275,6 +284,15 @@ class BookmarkFactoryMixin:
         user.profile.save()
         return user
 
+    def setup_api_token(self, user: User = None, name: str = ""):
+        if user is None:
+            user = self.get_or_create_test_user()
+        if not name:
+            name = get_random_string(length=32)
+        token = ApiToken(user=user, name=name)
+        token.save()
+        return token
+
     def get_tags_from_bookmarks(self, bookmarks: list[Bookmark]):
         all_tags = []
         for bookmark in bookmarks:
@@ -292,7 +310,7 @@ class HtmlTestMixin:
 
 class BookmarkListTestMixin(TestCase, HtmlTestMixin):
     def assertVisibleBookmarks(
-        self, response, bookmarks: List[Bookmark], link_target: str = "_blank"
+        self, response, bookmarks: list[Bookmark], link_target: str = "_blank"
     ):
         soup = self.make_soup(response.content.decode())
         bookmark_list = soup.select_one(
@@ -300,29 +318,29 @@ class BookmarkListTestMixin(TestCase, HtmlTestMixin):
         )
         self.assertIsNotNone(bookmark_list)
 
-        bookmark_items = bookmark_list.select("li[ld-bookmark-item]")
+        bookmark_items = bookmark_list.select("ul.bookmark-list > li")
         self.assertEqual(len(bookmark_items), len(bookmarks))
 
         for bookmark in bookmarks:
             bookmark_item = bookmark_list.select_one(
-                f'li[ld-bookmark-item] a[href="{bookmark.url}"][target="{link_target}"]'
+                f'ul.bookmark-list > li a[href="{bookmark.url}"][target="{link_target}"]'
             )
             self.assertIsNotNone(bookmark_item)
 
     def assertInvisibleBookmarks(
-        self, response, bookmarks: List[Bookmark], link_target: str = "_blank"
+        self, response, bookmarks: list[Bookmark], link_target: str = "_blank"
     ):
         soup = self.make_soup(response.content.decode())
 
         for bookmark in bookmarks:
             bookmark_item = soup.select_one(
-                f'li[ld-bookmark-item] a[href="{bookmark.url}"][target="{link_target}"]'
+                f'ul.bookmark-list > li a[href="{bookmark.url}"][target="{link_target}"]'
             )
             self.assertIsNone(bookmark_item)
 
 
 class TagCloudTestMixin(TestCase, HtmlTestMixin):
-    def assertVisibleTags(self, response, tags: List[Tag]):
+    def assertVisibleTags(self, response, tags: list[Tag]):
         soup = self.make_soup(response.content.decode())
         tag_cloud = soup.select_one("div.tag-cloud")
         self.assertIsNotNone(tag_cloud)
@@ -335,7 +353,7 @@ class TagCloudTestMixin(TestCase, HtmlTestMixin):
         for tag in tags:
             self.assertTrue(tag.name in tag_item_names)
 
-    def assertInvisibleTags(self, response, tags: List[Tag]):
+    def assertInvisibleTags(self, response, tags: list[Tag]):
         soup = self.make_soup(response.content.decode())
         tag_items = soup.select("a[data-is-tag-item]")
 
@@ -344,7 +362,7 @@ class TagCloudTestMixin(TestCase, HtmlTestMixin):
         for tag in tags:
             self.assertFalse(tag.name in tag_item_names)
 
-    def assertSelectedTags(self, response, tags: List[Tag]):
+    def assertSelectedTags(self, response, tags: list[Tag]):
         soup = self.make_soup(response.content.decode())
         selected_tags = soup.select_one("p.selected-tags")
         self.assertIsNotNone(selected_tags)
@@ -361,9 +379,9 @@ class TagCloudTestMixin(TestCase, HtmlTestMixin):
 
 class LinkdingApiTestCase(APITestCase):
     def authenticate(self):
-        self.api_token = Token.objects.get_or_create(
-            user=self.get_or_create_test_user()
-        )[0]
+        user = self.get_or_create_test_user()
+        self.api_token = ApiToken(user=user, name="Test Token")
+        self.api_token.save()
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.api_token.key)
 
     def get(self, url, expected_status_code=status.HTTP_200_OK):
@@ -418,18 +436,18 @@ class ImportTestMixin:
     def render_tag(self, tag: BookmarkHtmlTag):
         return f"""
         <DT>
-        <A {f'HREF="{tag.href}"' if tag.href else ''}
-           {f'ADD_DATE="{tag.add_date}"' if tag.add_date else ''}
-           {f'LAST_MODIFIED="{tag.last_modified}"' if tag.last_modified else ''}
-           {f'TAGS="{tag.tags}"' if tag.tags else ''}
+        <A {f'HREF="{tag.href}"' if tag.href else ""}
+           {f'ADD_DATE="{tag.add_date}"' if tag.add_date else ""}
+           {f'LAST_MODIFIED="{tag.last_modified}"' if tag.last_modified else ""}
+           {f'TAGS="{tag.tags}"' if tag.tags else ""}
            TOREAD="{1 if tag.to_read else 0}"
            PRIVATE="{1 if tag.private else 0}">
-           {tag.title if tag.title else ''}
+           {tag.title if tag.title else ""}
         </A>
-        {f'<DD>{tag.description}' if tag.description else ''}
+        {f"<DD>{tag.description}" if tag.description else ""}
         """
 
-    def render_html(self, tags: List[BookmarkHtmlTag] = None, tags_html: str = ""):
+    def render_html(self, tags: list[BookmarkHtmlTag] = None, tags_html: str = ""):
         if tags:
             rendered_tags = [self.render_tag(tag) for tag in tags]
             tags_html = "\n".join(rendered_tags)

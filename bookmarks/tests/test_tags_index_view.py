@@ -132,7 +132,7 @@ class TagsIndexViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
 
     def test_pagination(self):
         tags = []
-        for i in range(75):
+        for _i in range(75):
             tags.append(self.setup_tag())
 
         response = self.client.get(reverse("linkding:tags.index"))
@@ -152,24 +152,6 @@ class TagsIndexViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
 
         self.assertRedirects(response, reverse("linkding:tags.index"))
         self.assertFalse(Tag.objects.filter(id=tag.id).exists())
-
-    def test_tag_delete_action_shows_success_message(self):
-        tag = self.setup_tag(name="tag_to_delete")
-
-        response = self.client.post(
-            reverse("linkding:tags.index"), {"delete_tag": tag.id}, follow=True
-        )
-
-        self.assertEqual(response.status_code, 200)
-
-        self.assertInHTML(
-            """
-            <div class="toast toast-success" role="alert">
-                Tag "tag_to_delete" deleted successfully.
-            </div>
-        """,
-            response.content.decode(),
-        )
 
     def test_tag_delete_action_preserves_query_parameters(self):
         tag = self.setup_tag(name="search_tag")
@@ -255,7 +237,7 @@ class TagsIndexViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
 
         self.assertInHTML(
             """
-            <select id="sort" name="sort" class="form-select" ld-auto-submit>
+            <select id="sort" name="sort" class="form-select" data-submit-on-change>
               <option value="name-asc" selected>Name A-Z</option>
               <option value="name-desc">Name Z-A</option>
               <option value="count-asc">Fewest bookmarks</option>
@@ -270,7 +252,7 @@ class TagsIndexViewTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
 
         self.assertInHTML(
             """
-            <select id="sort" name="sort" class="form-select" ld-auto-submit>
+            <select id="sort" name="sort" class="form-select" data-submit-on-change>
               <option value="name-asc">Name A-Z</option>
               <option value="name-desc" selected>Name Z-A</option>
               <option value="count-asc">Fewest bookmarks</option>

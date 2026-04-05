@@ -4,12 +4,14 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from bookmarks.forms import TagForm, TagMergeForm
 from bookmarks.models import Bookmark, Tag
 from bookmarks.type_defs import HttpRequest
+from bookmarks.utils import redirect_with_query
+from bookmarks.views import turbo
 
 
 @login_required
@@ -17,15 +19,8 @@ def tags_index(request: HttpRequest):
     if request.method == "POST" and "delete_tag" in request.POST:
         tag_id = request.POST.get("delete_tag")
         tag = get_object_or_404(Tag, id=tag_id, owner=request.user)
-        tag_name = tag.name
         tag.delete()
-        messages.success(request, f'Tag "{tag_name}" deleted successfully.')
-
-        redirect_url = reverse("linkding:tags.index")
-        if request.GET:
-            redirect_url += "?" + request.GET.urlencode()
-
-        return HttpResponseRedirect(redirect_url)
+        return redirect_with_query(request, reverse("linkding:tags.index"))
 
     search = request.GET.get("search", "").strip()
     unused_only = request.GET.get("unused", "") == "true"
@@ -76,9 +71,18 @@ def tag_new(request: HttpRequest):
             tag = form.save()
             messages.success(request, f'Tag "{tag.name}" created successfully.')
             return HttpResponseRedirect(reverse("linkding:tags.index"))
+        else:
+            return turbo.stream(
+                turbo.replace(
+                    request,
+                    "tag-modal",
+                    "tags/new.html",
+                    {"form": form},
+                    method="morph",
+                )
+            )
 
-    status = 422 if request.method == "POST" and not form.is_valid() else 200
-    return render(request, "tags/new.html", {"form": form}, status=status)
+    return render(request, "tags/new.html", {"form": form})
 
 
 @login_required
@@ -90,15 +94,19 @@ def tag_edit(request: HttpRequest, tag_id: int):
     if request.method == "POST":
         if form.is_valid():
             form.save()
-            messages.success(request, f'Tag "{tag.name}" updated successfully.')
-            return HttpResponseRedirect(reverse("linkding:tags.index"))
+            return redirect_with_query(request, reverse("linkding:tags.index"))
+        else:
+            return turbo.stream(
+                turbo.replace(
+                    request,
+                    "tag-modal",
+                    "tags/edit.html",
+                    {"tag": tag, "form": form},
+                    method="morph",
+                )
+            )
 
-    status = 422 if request.method == "POST" and not form.is_valid() else 200
-    context = {
-        "tag": tag,
-        "form": form,
-    }
-    return render(request, "tags/edit.html", context, status=status)
+    return render(request, "tags/edit.html", {"tag": tag, "form": form})
 
 
 @login_required
@@ -146,6 +154,15 @@ def tag_merge(request: HttpRequest):
                 )
 
             return HttpResponseRedirect(reverse("linkding:tags.index"))
+        else:
+            return turbo.stream(
+                turbo.replace(
+                    request,
+                    "tag-modal",
+                    "tags/merge.html",
+                    {"form": form},
+                    method="morph",
+                )
+            )
 
-    status = 422 if request.method == "POST" and not form.is_valid() else 200
-    return render(request, "tags/merge.html", {"form": form}, status=status)
+    return render(request, "tags/merge.html", {"form": form})
