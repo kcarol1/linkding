@@ -70,6 +70,33 @@ class BookmarkNewViewTestCase(TestCase, BookmarkFactoryMixin):
         bookmark = Bookmark.objects.first()
         self.assertTrue(bookmark.shared)
 
+    def test_should_extract_url_from_shared_text(self):
+        form_data = self.create_form_data(
+            {
+                "url": "【科研是干出来的，不是看文献看出来的，执行力才是基础】 https://www.bilibili.com/video/BV14Z9TBNEjr/?share_source=copy_web&vd_source=206ee522c8143f8f82b131db9cfabe60"
+            }
+        )
+
+        self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.first()
+        self.assertEqual(
+            bookmark.url,
+            "https://www.bilibili.com/video/BV14Z9TBNEjr/?share_source=copy_web&vd_source=206ee522c8143f8f82b131db9cfabe60",
+        )
+
+    def test_should_extract_douyin_url_from_shared_text(self):
+        form_data = self.create_form_data(
+            {
+                "url": "2.58 复制打开抖音，看看【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#... https://v.douyin.com/0IglwfEROpY/ W@Z.Zz EUL:/ 05/27"
+            }
+        )
+
+        self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.first()
+        self.assertEqual(bookmark.url, "https://v.douyin.com/0IglwfEROpY/")
+
     def test_should_prefill_url_from_url_parameter(self):
         response = self.client.get(
             reverse("linkding:bookmarks.new") + "?url=http://example.com"

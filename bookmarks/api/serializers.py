@@ -12,6 +12,7 @@ from bookmarks.models import (
     build_tag_string,
 )
 from bookmarks.services import bookmarks, bundles
+from bookmarks.services.extension import extract_first_url
 from bookmarks.services.tags import get_or_create_tag
 from bookmarks.services.wayback import generate_fallback_webarchive_url
 from bookmarks.utils import app_version
@@ -63,6 +64,8 @@ class BookmarkBundleSerializer(serializers.ModelSerializer):
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
+    url = serializers.CharField()
+
     class Meta:
         model = Bookmark
         fields = [
@@ -159,7 +162,14 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
         return bookmarks.update_bookmark(instance, tag_string, self.context["user"])
 
+    def validate_url(self, value):
+        # 允许 API 客户端传入分享文案，而不只是纯 URL。
+        return extract_first_url(value)
+
     def validate(self, attrs):
+        if "url" in attrs:
+            attrs["url"] = extract_first_url(attrs["url"])
+
         # When creating a bookmark, the service logic prevents duplicate URLs by
         # updating the existing bookmark instead. When editing a bookmark,
         # there is no assumption that it would update a different bookmark if

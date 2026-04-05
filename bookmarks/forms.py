@@ -15,6 +15,7 @@ from bookmarks.models import (
     sanitize_tag_name,
 )
 from bookmarks.services.bookmarks import create_bookmark, update_bookmark
+from bookmarks.services.extension import extract_first_url
 from bookmarks.type_defs import HttpRequest
 from bookmarks.validators import BookmarkURLValidator
 from bookmarks.widgets import (
@@ -30,7 +31,7 @@ from bookmarks.widgets import (
 
 class BookmarkForm(forms.ModelForm):
     # Use URLField for URL
-    url = forms.CharField(validators=[BookmarkURLValidator()], widget=FormInput)
+    url = forms.CharField(widget=FormInput)
     tag_string = forms.CharField(required=False, widget=TagAutocomplete)
     # Do not require title and description as they may be empty
     title = forms.CharField(max_length=512, required=False, widget=FormInput)
@@ -102,7 +103,12 @@ class BookmarkForm(forms.ModelForm):
         # the form's UI. When editing a bookmark, there is no assumption that
         # it would update a different bookmark if the URL is a duplicate, so
         # raise a validation error in that case.
-        url = self.cleaned_data["url"]
+        # 先把“标题 + URL”这类分享文本提取成真实链接，再做 URL 校验。
+        url = extract_first_url(self.cleaned_data["url"])
+
+        validator = BookmarkURLValidator()
+        validator(url)
+
         if self.instance.pk:
             is_duplicate = (
                 Bookmark.query_existing(self.instance.owner, url)

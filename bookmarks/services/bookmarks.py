@@ -4,8 +4,8 @@ from django.utils import timezone
 
 from bookmarks.models import Bookmark, User, parse_tag_string
 from bookmarks.services import auto_tagging, tasks, website_loader
+from bookmarks.services.extension import extract_first_url
 from bookmarks.services.tags import get_or_create_tags
-from bookmarks.services.extension import extract_douyin_links
 
 logger = logging.getLogger(__name__)
 
@@ -16,14 +16,15 @@ def create_bookmark(
     current_user: User,
     disable_html_snapshot: bool = False,
 ):
+    # 非表单入口（例如 API）也要走同样的链接提取逻辑，避免入口行为不一致。
+    bookmark.url = extract_first_url(bookmark.url)
+
     # If URL is already bookmarked, then update it
     existing_bookmark: Bookmark = Bookmark.query_existing(
         current_user, bookmark.url
     ).first()
 
     if existing_bookmark is not None:
-        if extract_douyin_links(bookmark.url):
-            bookmark.url = extract_douyin_links(bookmark.url)
         _merge_bookmark_data(bookmark, existing_bookmark)
         return update_bookmark(existing_bookmark, tag_string, current_user)
 
@@ -56,6 +57,8 @@ def create_bookmark(
 
 
 def update_bookmark(bookmark: Bookmark, tag_string, current_user: User):
+    # 编辑书签时也沿用同样的规范化逻辑。
+    bookmark.url = extract_first_url(bookmark.url)
     # Detect URL change
     original_bookmark = Bookmark.objects.get(id=bookmark.id)
     has_url_changed = original_bookmark.url != bookmark.url
