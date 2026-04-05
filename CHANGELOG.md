@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### What's Changed
+* Add a dedicated sensitive bookmarks flow with separate active and archived views
+* Add single and bulk actions for marking bookmarks as sensitive or regular
+* Exclude sensitive bookmarks from regular bookmark and archived bookmark lists by default
+
 ## v1.45.0 (06/01/2026)
 
 ### What's Changed

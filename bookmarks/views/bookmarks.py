@@ -25,7 +25,9 @@ from bookmarks.services.bookmarks import (
     create_html_snapshots,
     delete_bookmarks,
     enhance_with_website_metadata,
+    mark_bookmarks_as_regular,
     mark_bookmarks_as_read,
+    mark_bookmarks_as_sensitive,
     mark_bookmarks_as_unread,
     refresh_bookmarks_metadata,
     share_bookmarks,
@@ -75,6 +77,84 @@ def index_update(request: HttpRequest):
     tag_cloud = contexts.ActiveTagCloudContext(request, search)
     details = contexts.get_details_context(
         request, contexts.ActiveBookmarkDetailsContext
+    )
+    return render_bookmarks_update(request, bookmark_list, tag_cloud, details)
+
+
+@login_required
+def sensitive(request: HttpRequest):
+    if request.method == "POST":
+        return search_action(request)
+
+    search = BookmarkSearch.from_request(
+        request, request.GET, request.user_profile.search_preferences
+    )
+    bookmark_list = contexts.SensitiveBookmarkListContext(request, search)
+    bundles = contexts.BundlesContext(request)
+    tag_cloud = contexts.SensitiveTagCloudContext(request, search)
+    bookmark_details = contexts.get_details_context(
+        request, contexts.SensitiveBookmarkDetailsContext
+    )
+
+    return render_bookmarks_view(
+        request,
+        {
+            "page_title": "Sensitive bookmarks - Linkding",
+            "bookmark_list": bookmark_list,
+            "bundles": bundles,
+            "tag_cloud": tag_cloud,
+            "details": bookmark_details,
+        },
+    )
+
+
+def sensitive_update(request: HttpRequest):
+    search = BookmarkSearch.from_request(
+        request, request.GET, request.user_profile.search_preferences
+    )
+    bookmark_list = contexts.SensitiveBookmarkListContext(request, search)
+    tag_cloud = contexts.SensitiveTagCloudContext(request, search)
+    details = contexts.get_details_context(
+        request, contexts.SensitiveBookmarkDetailsContext
+    )
+    return render_bookmarks_update(request, bookmark_list, tag_cloud, details)
+
+
+@login_required
+def archived_sensitive(request: HttpRequest):
+    if request.method == "POST":
+        return search_action(request)
+
+    search = BookmarkSearch.from_request(
+        request, request.GET, request.user_profile.search_preferences
+    )
+    bookmark_list = contexts.SensitiveArchivedBookmarkListContext(request, search)
+    bundles = contexts.BundlesContext(request)
+    tag_cloud = contexts.SensitiveArchivedTagCloudContext(request, search)
+    bookmark_details = contexts.get_details_context(
+        request, contexts.SensitiveArchivedBookmarkDetailsContext
+    )
+
+    return render_bookmarks_view(
+        request,
+        {
+            "page_title": "Sensitive archived bookmarks - Linkding",
+            "bookmark_list": bookmark_list,
+            "bundles": bundles,
+            "tag_cloud": tag_cloud,
+            "details": bookmark_details,
+        },
+    )
+
+
+def archived_sensitive_update(request: HttpRequest):
+    search = BookmarkSearch.from_request(
+        request, request.GET, request.user_profile.search_preferences
+    )
+    bookmark_list = contexts.SensitiveArchivedBookmarkListContext(request, search)
+    tag_cloud = contexts.SensitiveArchivedTagCloudContext(request, search)
+    details = contexts.get_details_context(
+        request, contexts.SensitiveArchivedBookmarkDetailsContext
     )
     return render_bookmarks_update(request, bookmark_list, tag_cloud, details)
 
@@ -308,9 +388,12 @@ def remove_asset(request: HttpRequest, asset_id: int | str):
 
 def update_state(request: HttpRequest, bookmark_id: int | str):
     bookmark = access.bookmark_write(request, bookmark_id)
+    # Keep the details modal toggles as the single place for bookmark status
+    # flags so sensitive state can be changed alongside archived/shared/unread.
     bookmark.is_archived = request.POST.get("is_archived") == "on"
     bookmark.unread = request.POST.get("unread") == "on"
     bookmark.shared = request.POST.get("shared") == "on"
+    bookmark.sensitive = request.POST.get("sensitive") == "on"
     bookmark.save()
 
 
@@ -346,6 +429,44 @@ def archived_action(request: HttpRequest):
         return archived_update(request)
 
     return utils.redirect_with_query(request, reverse("linkding:bookmarks.archived"))
+
+
+@login_required
+def sensitive_action(request: HttpRequest):
+    search = BookmarkSearch.from_request(
+        request, request.GET, request.user_profile.search_preferences
+    )
+    query = queries.query_sensitive_bookmarks(request.user, request.user_profile, search)
+
+    response = handle_action(request, query)
+    if response:
+        return response
+
+    if turbo.accept(request):
+        return sensitive_update(request)
+
+    return utils.redirect_with_query(request, reverse("linkding:bookmarks.sensitive"))
+
+
+@login_required
+def archived_sensitive_action(request: HttpRequest):
+    search = BookmarkSearch.from_request(
+        request, request.GET, request.user_profile.search_preferences
+    )
+    query = queries.query_sensitive_archived_bookmarks(
+        request.user, request.user_profile, search
+    )
+
+    response = handle_action(request, query)
+    if response:
+        return response
+
+    if turbo.accept(request):
+        return archived_sensitive_update(request)
+
+    return utils.redirect_with_query(
+        request, reverse("linkding:bookmarks.archived.sensitive")
+    )
 
 
 @login_required
@@ -421,6 +542,10 @@ def handle_action(request: HttpRequest, query: QuerySet[Bookmark] = None):
             return share_bookmarks(bookmark_ids, request.user)
         if bulk_action == "bulk_unshare":
             return unshare_bookmarks(bookmark_ids, request.user)
+        if bulk_action == "bulk_sensitive":
+            return mark_bookmarks_as_sensitive(bookmark_ids, request.user)
+        if bulk_action == "bulk_unsensitive":
+            return mark_bookmarks_as_regular(bookmark_ids, request.user)
         if bulk_action == "bulk_refresh":
             return refresh_bookmarks_metadata(bookmark_ids, request.user)
         if bulk_action == "bulk_snapshot":

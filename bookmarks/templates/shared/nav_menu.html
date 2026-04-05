@@ -13,6 +13,12 @@
       <li class="menu-item">
         <a href="{% url 'linkding:bookmarks.archived' %}" class="menu-link">Archived</a>
       </li>
+      <li class="menu-item">
+        <a href="{% url 'linkding:bookmarks.sensitive' %}" class="menu-link">Sensitive</a>
+      </li>
+      <li class="menu-item">
+        <a href="{% url 'linkding:bookmarks.archived.sensitive' %}" class="menu-link">Sensitive archived</a>
+      </li>
       {% if request.user_profile.enable_sharing %}
         <li class="menu-item">
           <a href="{% url 'linkding:bookmarks.shared' %}" class="menu-link">Shared</a>
@@ -76,6 +82,12 @@
       </li>
       <li class="menu-item">
         <a href="{% url 'linkding:bookmarks.archived' %}" class="menu-link">Archived bookmarks</a>
+      </li>
+      <li class="menu-item">
+        <a href="{% url 'linkding:bookmarks.sensitive' %}" class="menu-link">Sensitive bookmarks</a>
+      </li>
+      <li class="menu-item">
+        <a href="{% url 'linkding:bookmarks.archived.sensitive' %}" class="menu-link">Sensitive archived bookmarks</a>
       </li>
       {% if request.user_profile.enable_sharing %}
         <li class="menu-item">

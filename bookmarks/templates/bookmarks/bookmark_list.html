@@ -28,6 +28,9 @@
                  rel="noopener">
                 <span>{{ bookmark_item.title }}</span>
               </a>
+              {% if bookmark_item.sensitive %}
+                <span class="label ml-2">Sensitive</span>
+              {% endif %}
             </div>
             {% if bookmark_list.show_url %}
               <div class="url-path truncate">

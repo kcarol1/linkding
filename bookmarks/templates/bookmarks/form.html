@@ -75,6 +75,12 @@
       {% endformhelp %}
     </div>
   {% endif %}
+  <div class="form-group">
+    {% formfield form.sensitive label="Sensitive content" has_help=True %}
+    {% formhelp form.sensitive %}
+      Mark adult or other sensitive bookmarks so they are shown in a separate list.
+    {% endformhelp %}
+  </div>
   <div class="divider"></div>
   <div class="form-group d-flex justify-between">
     {% if form.is_auto_close %}
@@ -99,6 +105,7 @@
       const notesInput = document.getElementById('{{ form.notes.id_for_label }}');
       const unreadCheckbox = document.getElementById('{{ form.unread.id_for_label }}');
       const sharedCheckbox = document.getElementById('{{ form.shared.id_for_label }}');
+      const sensitiveCheckbox = document.getElementById('{{ form.sensitive.id_for_label }}');
       const refreshButton = document.getElementById('refresh-button');
       const bookmarkExistsHint = document.querySelector('.form-input-hint.bookmark-exists');
       const editedBookmarkId = parseInt('{{ form.instance.id|default:0 }}');
@@ -159,6 +166,7 @@
               updateInput(tagsInput, existingBookmark.tag_names.join(" "));
               updateCheckbox(unreadCheckbox, existingBookmark.unread);
               updateCheckbox(sharedCheckbox, existingBookmark.shared);
+              updateCheckbox(sensitiveCheckbox, existingBookmark.sensitive);
             } else {
               // Update title and description with website metadata, unless they have been modified
               if (!isTitleModified) {

@@ -200,6 +200,24 @@ def unshare_bookmarks(bookmark_ids: [int | str], current_user: User):
     )
 
 
+def mark_bookmarks_as_sensitive(bookmark_ids: [int | str], current_user: User):
+    sanitized_bookmark_ids = _sanitize_id_list(bookmark_ids)
+
+    # Bulk moves are implemented as a flag flip so bookmarks keep all existing
+    # metadata, tags, and archive state while switching list buckets.
+    Bookmark.objects.filter(owner=current_user, id__in=sanitized_bookmark_ids).update(
+        sensitive=True, date_modified=timezone.now()
+    )
+
+
+def mark_bookmarks_as_regular(bookmark_ids: [int | str], current_user: User):
+    sanitized_bookmark_ids = _sanitize_id_list(bookmark_ids)
+
+    Bookmark.objects.filter(owner=current_user, id__in=sanitized_bookmark_ids).update(
+        sensitive=False, date_modified=timezone.now()
+    )
+
+
 def refresh_bookmarks_metadata(bookmark_ids: [int | str], current_user: User):
     sanitized_bookmark_ids = _sanitize_id_list(bookmark_ids)
     owned_bookmarks = Bookmark.objects.filter(
@@ -226,6 +244,7 @@ def _merge_bookmark_data(from_bookmark: Bookmark, to_bookmark: Bookmark):
     to_bookmark.notes = from_bookmark.notes
     to_bookmark.unread = from_bookmark.unread
     to_bookmark.shared = from_bookmark.shared
+    to_bookmark.sensitive = from_bookmark.sensitive
 
 
 def _update_bookmark_tags(bookmark: Bookmark, tag_string: str, user: User):

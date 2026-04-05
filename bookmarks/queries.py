@@ -35,13 +35,39 @@ def query_bookmarks(
     profile: UserProfile,
     search: BookmarkSearch,
 ) -> QuerySet:
-    return _base_bookmarks_query(user, profile, search).filter(is_archived=False)
+    # Regular bookmark pages intentionally hide sensitive items so they only
+    # show up in the dedicated sensitive views.
+    return _base_bookmarks_query(user, profile, search).filter(
+        is_archived=False, sensitive=False
+    )
+
+
+def query_sensitive_bookmarks(
+    user: User,
+    profile: UserProfile,
+    search: BookmarkSearch,
+) -> QuerySet:
+    return _base_bookmarks_query(user, profile, search).filter(
+        is_archived=False, sensitive=True
+    )
 
 
 def query_archived_bookmarks(
     user: User, profile: UserProfile, search: BookmarkSearch
 ) -> QuerySet:
-    return _base_bookmarks_query(user, profile, search).filter(is_archived=True)
+    # Archived bookmarks follow the same split as active bookmarks: regular
+    # archived items stay separate from sensitive archived items.
+    return _base_bookmarks_query(user, profile, search).filter(
+        is_archived=True, sensitive=False
+    )
+
+
+def query_sensitive_archived_bookmarks(
+    user: User, profile: UserProfile, search: BookmarkSearch
+) -> QuerySet:
+    return _base_bookmarks_query(user, profile, search).filter(
+        is_archived=True, sensitive=True
+    )
 
 
 def query_shared_bookmarks(
@@ -54,7 +80,9 @@ def query_shared_bookmarks(
     if public_only:
         conditions = conditions & Q(owner__profile__enable_public_sharing=True)
 
-    return _base_bookmarks_query(user, profile, search).filter(conditions)
+    return _base_bookmarks_query(user, profile, search).filter(
+        conditions, sensitive=False
+    )
 
 
 def _convert_ast_to_q_object(ast_node: SearchExpression, profile: UserProfile) -> Q:
@@ -265,6 +293,12 @@ def _base_bookmarks_query(
     elif search.shared == BookmarkSearch.FILTER_SHARED_UNSHARED:
         query_set = query_set.filter(shared=False)
 
+    # Sensitive filter
+    if search.sensitive == BookmarkSearch.FILTER_SENSITIVE_YES:
+        query_set = query_set.filter(sensitive=True)
+    elif search.sensitive == BookmarkSearch.FILTER_SENSITIVE_NO:
+        query_set = query_set.filter(sensitive=False)
+
     # Filter by bundle
     if search.bundle:
         query_set = _filter_bundle(query_set, search.bundle)
@@ -315,10 +349,30 @@ def query_bookmark_tags(
     return query_set.distinct()
 
 
+def query_sensitive_bookmark_tags(
+    user: User, profile: UserProfile, search: BookmarkSearch
+) -> QuerySet:
+    bookmarks_query = query_sensitive_bookmarks(user, profile, search)
+
+    query_set = Tag.objects.filter(bookmark__in=bookmarks_query)
+
+    return query_set.distinct()
+
+
 def query_archived_bookmark_tags(
     user: User, profile: UserProfile, search: BookmarkSearch
 ) -> QuerySet:
     bookmarks_query = query_archived_bookmarks(user, profile, search)
+
+    query_set = Tag.objects.filter(bookmark__in=bookmarks_query)
+
+    return query_set.distinct()
+
+
+def query_sensitive_archived_bookmark_tags(
+    user: User, profile: UserProfile, search: BookmarkSearch
+) -> QuerySet:
+    bookmarks_query = query_sensitive_archived_bookmarks(user, profile, search)
 
     query_set = Tag.objects.filter(bookmark__in=bookmarks_query)
 

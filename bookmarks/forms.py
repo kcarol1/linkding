@@ -39,6 +39,7 @@ class BookmarkForm(forms.ModelForm):
     notes = forms.CharField(required=False, widget=FormTextarea)
     unread = forms.BooleanField(required=False, widget=FormCheckbox)
     shared = forms.BooleanField(required=False, widget=FormCheckbox)
+    sensitive = forms.BooleanField(required=False, widget=FormCheckbox)
     # Hidden field that determines whether to close window/tab after saving the bookmark
     auto_close = forms.CharField(required=False, widget=forms.HiddenInput)
 
@@ -52,6 +53,7 @@ class BookmarkForm(forms.ModelForm):
             "notes",
             "unread",
             "shared",
+            "sensitive",
             "auto_close",
         ]
 
@@ -69,6 +71,7 @@ class BookmarkForm(forms.ModelForm):
                 "auto_close": "auto_close" in request.GET,
                 "unread": request.user_profile.default_mark_unread,
                 "shared": request.user_profile.default_mark_shared,
+                "sensitive": False,
             }
         if instance is not None and request.method == "GET":
             initial = {"tag_string": build_tag_string(instance.tag_names, " ")}
@@ -282,6 +285,11 @@ class BookmarkSearchForm(forms.Form):
         (BookmarkSearch.FILTER_UNREAD_YES, "Unread"),
         (BookmarkSearch.FILTER_UNREAD_NO, "Read"),
     ]
+    FILTER_SENSITIVE_CHOICES = [
+        (BookmarkSearch.FILTER_SENSITIVE_OFF, "Off"),
+        (BookmarkSearch.FILTER_SENSITIVE_YES, "Sensitive"),
+        (BookmarkSearch.FILTER_SENSITIVE_NO, "Regular"),
+    ]
 
     q = forms.CharField()
     user = forms.ChoiceField(required=False, widget=FormSelect)
@@ -289,6 +297,9 @@ class BookmarkSearchForm(forms.Form):
     sort = forms.ChoiceField(choices=SORT_CHOICES, widget=FormSelect)
     shared = forms.ChoiceField(choices=FILTER_SHARED_CHOICES, widget=forms.RadioSelect)
     unread = forms.ChoiceField(choices=FILTER_UNREAD_CHOICES, widget=forms.RadioSelect)
+    sensitive = forms.ChoiceField(
+        choices=FILTER_SENSITIVE_CHOICES, widget=forms.RadioSelect
+    )
     modified_since = forms.CharField(required=False)
     added_since = forms.CharField(required=False)
 

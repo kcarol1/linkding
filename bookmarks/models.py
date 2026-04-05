@@ -66,6 +66,7 @@ class Bookmark(models.Model):
     unread = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
     shared = models.BooleanField(default=False)
+    sensitive = models.BooleanField(default=False)
     date_added = models.DateTimeField()
     date_modified = models.DateTimeField()
     date_accessed = models.DateTimeField(blank=True, null=True)
@@ -235,6 +236,10 @@ class BookmarkSearch:
     FILTER_UNREAD_YES = "yes"
     FILTER_UNREAD_NO = "no"
 
+    FILTER_SENSITIVE_OFF = "off"
+    FILTER_SENSITIVE_YES = "yes"
+    FILTER_SENSITIVE_NO = "no"
+
     params = [
         "q",
         "user",
@@ -242,10 +247,11 @@ class BookmarkSearch:
         "sort",
         "shared",
         "unread",
+        "sensitive",
         "modified_since",
         "added_since",
     ]
-    preferences = ["sort", "shared", "unread"]
+    preferences = ["sort", "shared", "unread", "sensitive"]
     defaults = {
         "q": "",
         "user": "",
@@ -253,6 +259,7 @@ class BookmarkSearch:
         "sort": SORT_ADDED_DESC,
         "shared": FILTER_SHARED_OFF,
         "unread": FILTER_UNREAD_OFF,
+        "sensitive": FILTER_SENSITIVE_OFF,
         "modified_since": None,
         "added_since": None,
     }
@@ -265,6 +272,7 @@ class BookmarkSearch:
         sort: str = None,
         shared: str = None,
         unread: str = None,
+        sensitive: str = None,
         modified_since: str = None,
         added_since: str = None,
         preferences: dict = None,
@@ -281,6 +289,7 @@ class BookmarkSearch:
         self.sort = sort or self.defaults["sort"]
         self.shared = shared or self.defaults["shared"]
         self.unread = unread or self.defaults["unread"]
+        self.sensitive = sensitive or self.defaults["sensitive"]
         self.modified_since = modified_since or self.defaults["modified_since"]
         self.added_since = added_since or self.defaults["added_since"]
 

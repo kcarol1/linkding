@@ -84,6 +84,15 @@
                 </label>
               </div>
             {% endif %}
+            <div class="form-group">
+              <label class="form-checkbox">
+                <input data-submit-on-change
+                       type="checkbox"
+                       name="sensitive"
+                       {% if details.bookmark.sensitive %}checked{% endif %}>
+                <i class="form-icon"></i> Sensitive
+              </label>
+            </div>
           </div>
         </section>
       {% endif %}
