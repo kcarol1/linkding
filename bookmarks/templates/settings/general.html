@@ -1,18 +1,20 @@
 {% extends "shared/layout.html" %}
-{% load shared %}
+{% load shared i18n %}
+{% trans "Language" as language_label %}
+{% trans "Theme" as theme_label %}
 {% block head %}
-  {% with page_title="Settings - Linkding" %}{{ block.super }}{% endwith %}
+  {% trans "Settings - Linkding" as page_title %}{{ block.super }}
 {% endblock %}
 {% block content %}
   <main class="settings-page" aria-labelledby="main-heading">
-    <h1 id="main-heading">Settings</h1>
+    <h1 id="main-heading">{% trans "Settings" %}</h1>
     {# Profile section #}
     {% if success_message %}<div class="toast toast-success mb-4">{{ success_message }}</div>{% endif %}
     {% if error_message %}<div class="toast toast-error mb-4">{{ error_message }}</div>{% endif %}
     <section aria-labelledby="profile-heading">
-      <h2 id="profile-heading">Profile</h2>
+      <h2 id="profile-heading">{% trans "Profile" %}</h2>
       <p>
-        <a href="{% url 'change_password' %}">Change password</a>
+        <a href="{% url 'change_password' %}">{% trans "Change password" %}</a>
       </p>
       <form action="{% url 'linkding:settings.update' %}"
             method="post"
@@ -20,7 +22,14 @@
             data-turbo="false">
         {% csrf_token %}
         <div class="form-group">
-          {% formlabel form.theme "Theme" %}
+          {% formlabel form.language language_label %}
+          {% formfield form.language has_help=True class="width-25 width-sm-100" %}
+          {% formhelp form.language %}
+            {% trans "Choose the language used by the application interface." %}
+          {% endformhelp %}
+        </div>
+        <div class="form-group">
+          {% formlabel form.theme theme_label %}
           {% formfield form.theme has_help=True class="width-25 width-sm-100" %}
           {% formhelp form.theme %}
             Whether to use a light or dark theme, or automatically adjust the theme based on your system's settings.
@@ -236,7 +245,7 @@ reddit.com/r/Music music reddit</pre>
         <div class="form-group">
           <input type="submit"
                  name="update_profile"
-                 value="Save"
+                 value="{% trans 'Save' %}"
                  class="btn btn-primary btn-wide mt-2">
         </div>
       </form>
@@ -244,7 +253,7 @@ reddit.com/r/Music music reddit</pre>
     {# Global settings section #}
     {% if global_settings_form %}
       <section aria-labelledby="global-settings-heading">
-        <h2 id="global-settings-heading">Global settings</h2>
+        <h2 id="global-settings-heading">{% trans "Global settings" %}</h2>
         <form action="{% url 'linkding:settings.update' %}"
               method="post"
               novalidate

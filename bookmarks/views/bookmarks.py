@@ -10,6 +10,7 @@ from django.http import (
 )
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 from bookmarks import queries, utils
 from bookmarks.forms import BookmarkForm
@@ -60,7 +61,7 @@ def index(request: HttpRequest):
     return render_bookmarks_view(
         request,
         {
-            "page_title": "Bookmarks - Linkding",
+            "page_title": _("Bookmarks - Linkding"),
             "bookmark_list": bookmark_list,
             "bundles": bundles,
             "tag_cloud": tag_cloud,
@@ -99,7 +100,7 @@ def sensitive(request: HttpRequest):
     return render_bookmarks_view(
         request,
         {
-            "page_title": "Sensitive bookmarks - Linkding",
+            "page_title": _("Sensitive bookmarks - Linkding"),
             "bookmark_list": bookmark_list,
             "bundles": bundles,
             "tag_cloud": tag_cloud,
@@ -138,7 +139,7 @@ def archived_sensitive(request: HttpRequest):
     return render_bookmarks_view(
         request,
         {
-            "page_title": "Sensitive archived bookmarks - Linkding",
+            "page_title": _("Sensitive archived bookmarks - Linkding"),
             "bookmark_list": bookmark_list,
             "bundles": bundles,
             "tag_cloud": tag_cloud,
@@ -177,7 +178,7 @@ def archived(request: HttpRequest):
     return render_bookmarks_view(
         request,
         {
-            "page_title": "Archived bookmarks - Linkding",
+            "page_title": _("Archived bookmarks - Linkding"),
             "bookmark_list": bookmark_list,
             "bundles": bundles,
             "tag_cloud": tag_cloud,
@@ -214,7 +215,7 @@ def shared(request: HttpRequest):
     return render_bookmarks_view(
         request,
         {
-            "page_title": "Shared bookmarks - Linkding",
+            "page_title": _("Shared bookmarks - Linkding"),
             "bookmark_list": bookmark_list,
             "tag_cloud": tag_cloud,
             "details": bookmark_details,

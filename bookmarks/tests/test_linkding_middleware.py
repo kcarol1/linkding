@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.translation import get_language
 
 from bookmarks.middlewares import standard_profile
 from bookmarks.models import GlobalSettings, UserProfile
@@ -11,6 +12,16 @@ class LinkdingMiddlewareTestCase(TestCase, BookmarkFactoryMixin):
         response = self.client.get(reverse("login"))
 
         self.assertEqual(standard_profile, response.wsgi_request.user_profile)
+
+    def test_unauthenticated_user_should_keep_browser_language(self):
+        response = self.client.get(
+            reverse("login"), HTTP_ACCEPT_LANGUAGE=UserProfile.LANGUAGE_SIMPLIFIED_CHINESE
+        )
+
+        self.assertEqual(
+            response.wsgi_request.LANGUAGE_CODE,
+            UserProfile.LANGUAGE_SIMPLIFIED_CHINESE,
+        )
 
     def test_unauthenticated_user_should_use_custom_configured_profile(self):
         guest_user = self.setup_user()
@@ -45,3 +56,17 @@ class LinkdingMiddlewareTestCase(TestCase, BookmarkFactoryMixin):
         response = self.client.get(reverse("login"), follow=True)
 
         self.assertEqual(user_profile, response.wsgi_request.user_profile)
+
+    def test_authenticated_user_should_activate_profile_language(self):
+        user = self.get_or_create_test_user()
+        user.profile.language = UserProfile.LANGUAGE_SIMPLIFIED_CHINESE
+        user.profile.save()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("linkding:bookmarks.index"))
+
+        self.assertEqual(
+            response.wsgi_request.LANGUAGE_CODE,
+            UserProfile.LANGUAGE_SIMPLIFIED_CHINESE,
+        )
+        self.assertEqual(get_language(), UserProfile.LANGUAGE_SIMPLIFIED_CHINESE)

@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from bookmarks.models import (
     Bookmark,
@@ -270,25 +271,25 @@ class BookmarkBundleForm(forms.ModelForm):
 
 class BookmarkSearchForm(forms.Form):
     SORT_CHOICES = [
-        (BookmarkSearch.SORT_ADDED_ASC, "Added ↑"),
-        (BookmarkSearch.SORT_ADDED_DESC, "Added ↓"),
-        (BookmarkSearch.SORT_TITLE_ASC, "Title ↑"),
-        (BookmarkSearch.SORT_TITLE_DESC, "Title ↓"),
+        (BookmarkSearch.SORT_ADDED_ASC, _("Added ↑")),
+        (BookmarkSearch.SORT_ADDED_DESC, _("Added ↓")),
+        (BookmarkSearch.SORT_TITLE_ASC, _("Title ↑")),
+        (BookmarkSearch.SORT_TITLE_DESC, _("Title ↓")),
     ]
     FILTER_SHARED_CHOICES = [
-        (BookmarkSearch.FILTER_SHARED_OFF, "Off"),
-        (BookmarkSearch.FILTER_SHARED_SHARED, "Shared"),
-        (BookmarkSearch.FILTER_SHARED_UNSHARED, "Unshared"),
+        (BookmarkSearch.FILTER_SHARED_OFF, _("Off")),
+        (BookmarkSearch.FILTER_SHARED_SHARED, _("Shared")),
+        (BookmarkSearch.FILTER_SHARED_UNSHARED, _("Unshared")),
     ]
     FILTER_UNREAD_CHOICES = [
-        (BookmarkSearch.FILTER_UNREAD_OFF, "Off"),
-        (BookmarkSearch.FILTER_UNREAD_YES, "Unread"),
-        (BookmarkSearch.FILTER_UNREAD_NO, "Read"),
+        (BookmarkSearch.FILTER_UNREAD_OFF, _("Off")),
+        (BookmarkSearch.FILTER_UNREAD_YES, _("Unread")),
+        (BookmarkSearch.FILTER_UNREAD_NO, _("Read")),
     ]
     FILTER_SENSITIVE_CHOICES = [
-        (BookmarkSearch.FILTER_SENSITIVE_OFF, "Off"),
-        (BookmarkSearch.FILTER_SENSITIVE_YES, "Sensitive"),
-        (BookmarkSearch.FILTER_SENSITIVE_NO, "Regular"),
+        (BookmarkSearch.FILTER_SENSITIVE_OFF, _("Off")),
+        (BookmarkSearch.FILTER_SENSITIVE_YES, _("Sensitive")),
+        (BookmarkSearch.FILTER_SENSITIVE_NO, _("Regular")),
     ]
 
     q = forms.CharField()
@@ -338,6 +339,7 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [
+            "language",
             "theme",
             "bookmark_date_display",
             "bookmark_description_display",
@@ -369,6 +371,7 @@ class UserProfileForm(forms.ModelForm):
         ]
         widgets = {
             "theme": FormSelect,
+            "language": FormSelect,
             "bookmark_date_display": FormSelect,
             "bookmark_description_display": FormSelect,
             "bookmark_description_max_lines": FormNumberInput,

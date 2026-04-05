@@ -218,6 +218,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = [
+            "language",
             "theme",
             "bookmark_date_display",
             "bookmark_link_target",

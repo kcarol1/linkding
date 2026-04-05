@@ -1,0 +1,409 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: linkding\n"
+"POT-Creation-Date: 2026-04-05 17:30+0800\n"
+"PO-Revision-Date: 2026-04-05 17:30+0800\n"
+"Last-Translator: Codex\n"
+"Language-Team: Simplified Chinese\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Added ↑"
+msgstr "添加时间 ↑"
+
+msgid "Added ↓"
+msgstr "添加时间 ↓"
+
+msgid "Title ↑"
+msgstr "标题 ↑"
+
+msgid "Title ↓"
+msgstr "标题 ↓"
+
+msgid "Off"
+msgstr "关闭"
+
+msgid "Shared"
+msgstr "已分享"
+
+msgid "Unshared"
+msgstr "未分享"
+
+msgid "Unread"
+msgstr "未读"
+
+msgid "Read"
+msgstr "已读"
+
+msgid "Sensitive"
+msgstr "敏感"
+
+msgid "Regular"
+msgstr "普通"
+
+msgid "All"
+msgstr "全部"
+
+msgid "English"
+msgstr "English"
+
+msgid "Simplified Chinese"
+msgstr "简体中文"
+
+msgid "Shared Bookmarks"
+msgstr "共享书签"
+
+msgid "Auto"
+msgstr "自动"
+
+msgid "Light"
+msgstr "浅色"
+
+msgid "Dark"
+msgstr "深色"
+
+msgid "Relative"
+msgstr "相对时间"
+
+msgid "Absolute"
+msgstr "绝对时间"
+
+msgid "Hidden"
+msgstr "隐藏"
+
+msgid "Inline"
+msgstr "同行显示"
+
+msgid "Separate"
+msgstr "分开显示"
+
+msgid "New page"
+msgstr "新页面"
+
+msgid "Same page"
+msgstr "当前页面"
+
+msgid "Disabled"
+msgstr "禁用"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Strict"
+msgstr "严格"
+
+msgid "Lax"
+msgstr "宽松"
+
+msgid "Alphabetical"
+msgstr "按字母分组"
+
+msgid "Login"
+msgstr "登录"
+
+msgid "Login - Linkding"
+msgstr "登录 - Linkding"
+
+msgid "Login with OIDC"
+msgstr "使用 OIDC 登录"
+
+msgid "Your username and password didn't match. Please try again."
+msgstr "用户名或密码不正确，请重试。"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Settings - Linkding"
+msgstr "设置 - Linkding"
+
+msgid "Profile"
+msgstr "个人设置"
+
+msgid "Change password"
+msgstr "修改密码"
+
+msgid "Language"
+msgstr "语言"
+
+msgid "Choose the language used by the application interface."
+msgstr "选择应用界面使用的语言。"
+
+msgid "Theme"
+msgstr "主题"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Global settings"
+msgstr "全局设置"
+
+msgid "Add bookmark"
+msgstr "添加收藏"
+
+msgid "Bookmarks"
+msgstr "书签"
+
+msgid "Active"
+msgstr "当前收藏"
+
+msgid "Archived"
+msgstr "已归档"
+
+msgid "Sensitive archived"
+msgstr "敏感归档"
+
+msgid "Untagged"
+msgstr "未打标签"
+
+msgid "General"
+msgstr "常规"
+
+msgid "Integrations"
+msgstr "集成"
+
+msgid "Admin"
+msgstr "管理后台"
+
+msgid "Logout"
+msgstr "退出登录"
+
+msgid "Navigation menu"
+msgstr "导航菜单"
+
+msgid "Archived bookmarks"
+msgstr "已归档书签"
+
+msgid "Sensitive bookmarks"
+msgstr "敏感书签"
+
+msgid "Sensitive archived bookmarks"
+msgstr "敏感归档书签"
+
+msgid "Shared bookmarks"
+msgstr "共享书签"
+
+msgid "Bookmarks - Linkding"
+msgstr "书签 - Linkding"
+
+msgid "Sensitive bookmarks - Linkding"
+msgstr "敏感书签 - Linkding"
+
+msgid "Sensitive archived bookmarks - Linkding"
+msgstr "敏感归档书签 - Linkding"
+
+msgid "Archived bookmarks - Linkding"
+msgstr "已归档书签 - Linkding"
+
+msgid "Shared bookmarks - Linkding"
+msgstr "共享书签 - Linkding"
+
+msgid "View"
+msgstr "查看"
+
+msgid "Edit"
+msgstr "编辑"
+
+msgid "Unarchive"
+msgstr "取消归档"
+
+msgid "Archive"
+msgstr "归档"
+
+msgid "Remove"
+msgstr "删除"
+
+msgid "Shared by"
+msgstr "分享者"
+
+msgid "Mark as read?"
+msgstr "标记为已读？"
+
+msgid "Unshare?"
+msgstr "取消分享？"
+
+msgid "Notes"
+msgstr "备注"
+
+msgid "Bulk edit"
+msgstr "批量编辑"
+
+msgid "Filters"
+msgstr "筛选"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Add tags"
+msgstr "添加标签"
+
+msgid "Remove tags"
+msgstr "移除标签"
+
+msgid "Mark as sensitive"
+msgstr "标记为敏感"
+
+msgid "Mark as regular"
+msgstr "标记为普通"
+
+msgid "Mark as read"
+msgstr "标记为已读"
+
+msgid "Mark as unread"
+msgstr "标记为未读"
+
+msgid "Share"
+msgstr "分享"
+
+msgid "Unshare"
+msgstr "取消分享"
+
+msgid "Refresh from website"
+msgstr "从网站刷新"
+
+msgid "Create HTML snapshot"
+msgstr "创建 HTML 快照"
+
+msgid "Tag names..."
+msgstr "标签名..."
+
+msgid "Execute"
+msgstr "执行"
+
+msgid "All <span class=\"total\">%(bookmark_list.bookmarks_total)s</span> bookmarks"
+msgstr "全部 <span class=\"total\">%(bookmark_list.bookmarks_total)s</span> 个书签"
+
+msgid "Reader mode"
+msgstr "阅读模式"
+
+msgid "Internet Archive"
+msgstr "互联网档案馆"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Files"
+msgstr "文件"
+
+msgid "Tags"
+msgstr "标签"
+
+msgid "Date added"
+msgstr "添加时间"
+
+msgid "Description"
+msgstr "描述"
+
+msgid "Edit bookmark - Linkding"
+msgstr "编辑书签 - Linkding"
+
+msgid "Edit bookmark"
+msgstr "编辑书签"
+
+msgid "URL"
+msgstr "URL"
+
+msgid ""
+"This URL is already bookmarked.\n"
+"      The form has been pre-filled with the existing bookmark, and saving "
+"the form will update the existing bookmark."
+msgstr ""
+"这个 URL 已经被收藏过了。\n"
+"      表单已自动填入现有书签的信息，保存后会更新该书签。"
+
+msgid ""
+"Enter any number of tags separated by space and <strong>without</strong> the "
+"hash (#).\n"
+"      If a tag does not exist it will be automatically created."
+msgstr ""
+"输入任意数量的标签，标签之间用空格分隔，且<strong>不要</strong>带井号 (#)。\n"
+"      如果标签不存在，系统会自动创建。"
+
+msgid "Title"
+msgstr "标题"
+
+msgid "Clear"
+msgstr "清空"
+
+msgid "Additional notes, supports Markdown."
+msgstr "附加备注，支持 Markdown。"
+
+msgid ""
+"Unread bookmarks can be filtered for, and marked as read after you had a "
+"chance to look at them."
+msgstr "未读书签可以被单独筛选，在查看后也可以标记为已读。"
+
+msgid "Share this bookmark with other registered users and anonymous users."
+msgstr "将此书签分享给其他注册用户和匿名用户。"
+
+msgid "Share this bookmark with other registered users."
+msgstr "将此书签分享给其他注册用户。"
+
+msgid "Sensitive content"
+msgstr "敏感内容"
+
+msgid ""
+"Mark adult or other sensitive bookmarks so they are shown in a separate list."
+msgstr "将成人或其他敏感书签标记出来，并单独显示在独立列表中。"
+
+msgid "Save and close"
+msgstr "保存并关闭"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "New bookmark - Linkding"
+msgstr "新建书签 - Linkding"
+
+msgid "New bookmark"
+msgstr "新建书签"
+
+msgid "Search for words or #tags"
+msgstr "搜索关键词或 #标签"
+
+msgid "Search"
+msgstr "搜索"
+
+msgid "Search preferences"
+msgstr "搜索偏好"
+
+msgid "Sort by"
+msgstr "排序方式"
+
+msgid "Shared filter"
+msgstr "分享筛选"
+
+msgid "Unread filter"
+msgstr "未读筛选"
+
+msgid "Apply"
+msgstr "应用"
+
+msgid "Save as default"
+msgstr "保存为默认"
+
+msgid "Global settings updated"
+msgstr "全局设置已更新"
+
+msgid "Scheduled favicon update. This may take a while..."
+msgstr "已安排 favicon 刷新任务，这可能需要一些时间..."
+
+msgid "Queued %(count)s missing snapshots. This may take a while..."
+msgstr "已加入 %(count)s 个缺失快照到队列，这可能需要一些时间..."
+
+msgid "No missing snapshots found."
+msgstr "没有发现缺失的快照。"
+
+msgid "Profile updated"
+msgstr "个人设置已更新"
+
+msgid "Profile update failed, check the form below for errors"
+msgstr "个人设置更新失败，请检查下方表单中的错误信息"
