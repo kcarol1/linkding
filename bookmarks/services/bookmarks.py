@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from bookmarks.models import Bookmark, User, parse_tag_string
 from bookmarks.services import auto_tagging, tasks, website_loader
-from bookmarks.services.extension import extract_first_url
+from bookmarks.services.extension import extract_first_url, resolve_special_share_url
 from bookmarks.services.tags import get_or_create_tags
 
 logger = logging.getLogger(__name__)
@@ -17,9 +17,9 @@ def create_bookmark(
     disable_html_snapshot: bool = False,
 ):
     # 非表单入口（例如 API）也要走同样的链接提取逻辑，避免入口行为不一致。
-    bookmark.url = extract_first_url(bookmark.url)
+    bookmark.url = resolve_special_share_url(extract_first_url(bookmark.url))
 
-    # If URL is already bookmarked, then update it
+    # 如果 URL 已存在，则复用已有书签并更新其内容。
     existing_bookmark: Bookmark = Bookmark.query_existing(
         current_user, bookmark.url
     ).first()
@@ -28,25 +28,24 @@ def create_bookmark(
         _merge_bookmark_data(bookmark, existing_bookmark)
         return update_bookmark(existing_bookmark, tag_string, current_user)
 
-    # Set currently logged in user as owner
+    # 将当前登录用户设置为书签拥有者。
     bookmark.owner = current_user
-    # Set dates only if not already provided
-    # This allows to sync existing dates through the REST API for example
+    # 仅在未显式提供日期时自动补齐，便于 API 同步已有数据。
     if not bookmark.date_added:
         bookmark.date_added = timezone.now()
     if not bookmark.date_modified:
         bookmark.date_modified = timezone.now()
     bookmark.save()
-    # Update tag list
+    # 更新标签。
     _update_bookmark_tags(bookmark, tag_string, current_user)
     bookmark.save()
-    # Create snapshot on web archive
+    # 创建网页归档快照。
     tasks.create_web_archive_snapshot(current_user, bookmark, False)
-    # Load favicon
+    # 加载站点图标。
     tasks.load_favicon(current_user, bookmark)
-    # Load preview image
+    # 加载预览图。
     tasks.load_preview_image(current_user, bookmark)
-    # Create HTML snapshot
+    # 创建 HTML 快照。
     if (
         current_user.profile.enable_automatic_html_snapshots
         and not disable_html_snapshot
@@ -58,22 +57,22 @@ def create_bookmark(
 
 def update_bookmark(bookmark: Bookmark, tag_string, current_user: User):
     # 编辑书签时也沿用同样的规范化逻辑。
-    bookmark.url = extract_first_url(bookmark.url)
-    # Detect URL change
+    bookmark.url = resolve_special_share_url(extract_first_url(bookmark.url))
+    # 判断 URL 是否发生变化。
     original_bookmark = Bookmark.objects.get(id=bookmark.id)
     has_url_changed = original_bookmark.url != bookmark.url
-    # Update tag list
+    # 更新标签。
     _update_bookmark_tags(bookmark, tag_string, current_user)
-    # Update dates
+    # 更新时间。
     bookmark.date_modified = timezone.now()
     bookmark.save()
-    # Update favicon
+    # 更新站点图标。
     tasks.load_favicon(current_user, bookmark)
-    # Update preview image
+    # 更新预览图。
     tasks.load_preview_image(current_user, bookmark)
 
     if has_url_changed:
-        # Update web archive snapshot, if URL changed
+        # URL 变更后同步更新网页归档快照。
         tasks.create_web_archive_snapshot(current_user, bookmark, True)
 
     return bookmark

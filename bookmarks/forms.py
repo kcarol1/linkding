@@ -15,7 +15,7 @@ from bookmarks.models import (
     sanitize_tag_name,
 )
 from bookmarks.services.bookmarks import create_bookmark, update_bookmark
-from bookmarks.services.extension import extract_first_url
+from bookmarks.services.extension import extract_first_url, extract_share_text_metadata
 from bookmarks.type_defs import HttpRequest
 from bookmarks.validators import BookmarkURLValidator
 from bookmarks.widgets import (
@@ -119,6 +119,20 @@ class BookmarkForm(forms.ModelForm):
                 raise forms.ValidationError("A bookmark with this URL already exists.")
 
         return url
+
+    def clean(self):
+        cleaned_data = super().clean()
+        raw_url = self.data.get("url", "")
+        title = cleaned_data.get("title", "")
+        description = cleaned_data.get("description", "")
+
+        fallback_title, fallback_description = extract_share_text_metadata(raw_url)
+        if not title and fallback_title:
+            cleaned_data["title"] = fallback_title
+        if not description and fallback_description:
+            cleaned_data["description"] = fallback_description
+
+        return cleaned_data
 
 
 def convert_tag_string(tag_string: str):

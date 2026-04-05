@@ -1,5 +1,6 @@
 import datetime
 from unittest.mock import patch
+from unittest import mock
 
 from django.test import TestCase
 from django.utils import timezone
@@ -168,6 +169,43 @@ class BookmarkServiceTestCase(TestCase, BookmarkFactoryMixin):
         self.assertEqual(created_bookmark.url, "https://EXAMPLE.COM/path/?z=1&a=2")
         self.assertEqual(
             created_bookmark.url_normalized, "https://example.com/path?a=2&z=1"
+        )
+
+    def test_create_should_resolve_douyin_short_url(self):
+        bookmark_data = Bookmark(url="https://v.douyin.com/0IglwfEROpY/")
+        redirect_response = mock.MagicMock()
+        redirect_response.__enter__.return_value.url = (
+            "https://www.iesdouyin.com/share/video/1234567890/"
+        )
+        redirect_response.__exit__.return_value = False
+
+        with patch("bookmarks.services.extension.requests.get") as mock_get:
+            mock_get.return_value = redirect_response
+
+            created_bookmark = create_bookmark(bookmark_data, "", self.user)
+
+        self.assertEqual(
+            created_bookmark.url,
+            "https://www.iesdouyin.com/share/video/1234567890/",
+        )
+
+    def test_update_should_resolve_douyin_short_url(self):
+        bookmark = self.setup_bookmark(url="https://example.com/original")
+        bookmark.url = "https://v.douyin.com/0IglwfEROpY/"
+        redirect_response = mock.MagicMock()
+        redirect_response.__enter__.return_value.url = (
+            "https://www.iesdouyin.com/share/video/1234567890/"
+        )
+        redirect_response.__exit__.return_value = False
+
+        with patch("bookmarks.services.extension.requests.get") as mock_get:
+            mock_get.return_value = redirect_response
+
+            updated_bookmark = update_bookmark(bookmark, "", self.user)
+
+        self.assertEqual(
+            updated_bookmark.url,
+            "https://www.iesdouyin.com/share/video/1234567890/",
         )
 
     def test_create_should_create_web_archive_snapshot(self):

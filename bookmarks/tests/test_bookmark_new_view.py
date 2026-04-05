@@ -97,7 +97,10 @@ class BookmarkNewViewTestCase(TestCase, BookmarkFactoryMixin):
         self.client.post(reverse("linkding:bookmarks.new"), form_data)
 
         bookmark = Bookmark.objects.first()
-        self.assertEqual(bookmark.url, "https://v.douyin.com/0IglwfEROpY/")
+        self.assertEqual(
+            bookmark.url,
+            "https://www.douyin.com/video/7624371408063171880?previous_page=app_code_link",
+        )
 
     def test_should_fetch_website_metadata_after_create(self):
         form_data = self.create_form_data({"title": "", "description": ""})
@@ -115,6 +118,41 @@ class BookmarkNewViewTestCase(TestCase, BookmarkFactoryMixin):
         bookmark = Bookmark.objects.get()
         self.assertEqual(bookmark.title, "Fetched title")
         self.assertEqual(bookmark.description, "Fetched description")
+
+    def test_should_use_douyin_share_text_as_fallback_metadata(self):
+        form_data = self.create_form_data(
+            {
+                "url": "2.58 复制打开抖音，看看【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#... https://v.douyin.com/0IglwfEROpY/ W@Z.Zz EUL:/ 05/27",
+                "title": "",
+                "description": "",
+            }
+        )
+
+        with (
+            patch("bookmarks.services.bookmarks.resolve_special_share_url") as mock_resolve,
+            patch.object(website_loader, "load_website_metadata") as mock_load,
+        ):
+            mock_resolve.return_value = (
+                "https://www.douyin.com/video/7624371408063171880?previous_page=app_code_link"
+            )
+            mock_load.return_value = website_loader.WebsiteMetadata(
+                url="https://www.douyin.com/video/7624371408063171880?previous_page=app_code_link",
+                title=None,
+                description=None,
+                preview_image=None,
+            )
+
+            self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.get()
+        self.assertEqual(
+            bookmark.title,
+            "【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#",
+        )
+        self.assertEqual(
+            bookmark.description,
+            "【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#",
+        )
 
     def test_should_prefill_url_from_url_parameter(self):
         response = self.client.get(
