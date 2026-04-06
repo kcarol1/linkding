@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.db import models
 from django.http import Http404
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from bookmarks import queries, utils
 from bookmarks.forms import BookmarkSearchForm
@@ -93,6 +94,21 @@ class ActiveBookmarksContext(RequestContext):
         )
 
 
+class SensitiveBookmarksContext(RequestContext):
+    index_view = "linkding:bookmarks.sensitive"
+    action_view = "linkding:bookmarks.sensitive.action"
+
+    def get_bookmark_query_set(self, search: BookmarkSearch):
+        return queries.query_sensitive_bookmarks(
+            self.request.user, self.request.user_profile, search
+        )
+
+    def get_tag_query_set(self, search: BookmarkSearch):
+        return queries.query_sensitive_bookmark_tags(
+            self.request.user, self.request.user_profile, search
+        )
+
+
 class ArchivedBookmarksContext(RequestContext):
     index_view = "linkding:bookmarks.archived"
     action_view = "linkding:bookmarks.archived.action"
@@ -104,6 +120,21 @@ class ArchivedBookmarksContext(RequestContext):
 
     def get_tag_query_set(self, search: BookmarkSearch):
         return queries.query_archived_bookmark_tags(
+            self.request.user, self.request.user_profile, search
+        )
+
+
+class SensitiveArchivedBookmarksContext(RequestContext):
+    index_view = "linkding:bookmarks.archived.sensitive"
+    action_view = "linkding:bookmarks.archived.sensitive.action"
+
+    def get_bookmark_query_set(self, search: BookmarkSearch):
+        return queries.query_sensitive_archived_bookmarks(
+            self.request.user, self.request.user_profile, search
+        )
+
+    def get_tag_query_set(self, search: BookmarkSearch):
+        return queries.query_sensitive_archived_bookmark_tags(
             self.request.user, self.request.user_profile, search
         )
 
@@ -165,6 +196,7 @@ class BookmarkItem:
         self.favicon_file = bookmark.favicon_file
         self.preview_image_file = bookmark.preview_image_file
         self.is_archived = bookmark.is_archived
+        self.sensitive = bookmark.sensitive
         self.unread = bookmark.unread
         self.owner = bookmark.owner
         self.details_url = context.details(bookmark.id)
@@ -174,6 +206,8 @@ class BookmarkItem:
             css_classes.append("unread")
         if bookmark.shared:
             css_classes.append("shared")
+        if bookmark.sensitive:
+            css_classes.append("sensitive")
 
         self.css_classes = " ".join(css_classes)
 
@@ -265,7 +299,7 @@ class BookmarkListContext:
 
 
 class ActiveBookmarkListContext(BookmarkListContext):
-    list_title = "Bookmarks"
+    list_title = _("Bookmarks")
     search_mode = ""
     bulk_edit_enabled = True
     bulk_edit_disabled_actions = "bulk_unarchive"
@@ -273,15 +307,31 @@ class ActiveBookmarkListContext(BookmarkListContext):
 
 
 class ArchivedBookmarkListContext(BookmarkListContext):
-    list_title = "Archived bookmarks"
+    list_title = _("Archived bookmarks")
     search_mode = "archived"
     bulk_edit_enabled = True
     bulk_edit_disabled_actions = "bulk_archive"
     request_context = ArchivedBookmarksContext
 
 
+class SensitiveArchivedBookmarkListContext(BookmarkListContext):
+    list_title = _("Sensitive archived bookmarks")
+    search_mode = "archived-sensitive"
+    bulk_edit_enabled = True
+    bulk_edit_disabled_actions = "bulk_archive"
+    request_context = SensitiveArchivedBookmarksContext
+
+
+class SensitiveBookmarkListContext(BookmarkListContext):
+    list_title = _("Sensitive bookmarks")
+    search_mode = "sensitive"
+    bulk_edit_enabled = True
+    bulk_edit_disabled_actions = "bulk_unarchive"
+    request_context = SensitiveBookmarksContext
+
+
 class SharedBookmarkListContext(BookmarkListContext):
-    list_title = "Shared bookmarks"
+    list_title = _("Shared bookmarks")
     search_mode = "shared"
     bulk_edit_enabled = False
     bulk_edit_disabled_actions = ""
@@ -513,8 +563,30 @@ class ActiveTagCloudContext(TagCloudContext):
         )
 
 
+class SensitiveTagCloudContext(TagCloudContext):
+    request_context = SensitiveBookmarksContext
+
+    def get_selected_tags(self):
+        return list(
+            queries.get_tags_for_query(
+                self.request.user, self.request.user_profile, self.search.q
+            )
+        )
+
+
 class ArchivedTagCloudContext(TagCloudContext):
     request_context = ArchivedBookmarksContext
+
+    def get_selected_tags(self):
+        return list(
+            queries.get_tags_for_query(
+                self.request.user, self.request.user_profile, self.search.q
+            )
+        )
+
+
+class SensitiveArchivedTagCloudContext(TagCloudContext):
+    request_context = SensitiveArchivedBookmarksContext
 
     def get_selected_tags(self):
         return list(
@@ -617,8 +689,16 @@ class ActiveBookmarkDetailsContext(BookmarkDetailsContext):
     request_context = ActiveBookmarksContext
 
 
+class SensitiveBookmarkDetailsContext(BookmarkDetailsContext):
+    request_context = SensitiveBookmarksContext
+
+
 class ArchivedBookmarkDetailsContext(BookmarkDetailsContext):
     request_context = ArchivedBookmarksContext
+
+
+class SensitiveArchivedBookmarkDetailsContext(BookmarkDetailsContext):
+    request_context = SensitiveArchivedBookmarksContext
 
 
 class SharedBookmarkDetailsContext(BookmarkDetailsContext):

@@ -17,6 +17,7 @@
 !/uv.lock
 !/uwsgi.ini
 !/version.txt
-
+# Simplified Chinese
+!/locale
  # Remove dev settings
 /bookmarks/settings/dev.py

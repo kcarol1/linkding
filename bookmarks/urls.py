@@ -26,6 +26,22 @@ urlpatterns = [
     path(
         "bookmarks/action", bookmarks_views.index_action, name="bookmarks.index.action"
     ),
+    path("bookmarks/sensitive", bookmarks_views.sensitive, name="bookmarks.sensitive"),
+    path(
+        "bookmarks/sensitive/action",
+        bookmarks_views.sensitive_action,
+        name="bookmarks.sensitive.action",
+    ),
+    path(
+        "bookmarks/archived/sensitive",
+        bookmarks_views.archived_sensitive,
+        name="bookmarks.archived.sensitive",
+    ),
+    path(
+        "bookmarks/archived/sensitive/action",
+        bookmarks_views.archived_sensitive_action,
+        name="bookmarks.archived.sensitive.action",
+    ),
     path("bookmarks/archived", bookmarks_views.archived, name="bookmarks.archived"),
     path(
         "bookmarks/archived/action",

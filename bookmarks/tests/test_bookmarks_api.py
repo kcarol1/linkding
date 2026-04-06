@@ -64,6 +64,7 @@ class BookmarksApiTestCase(LinkdingApiTestCase, BookmarkFactoryMixin):
             expectation["is_archived"] = bookmark.is_archived
             expectation["unread"] = bookmark.unread
             expectation["shared"] = bookmark.shared
+            expectation["sensitive"] = bookmark.sensitive
             expectation["tag_names"] = tag_names
             expectation["date_added"] = bookmark.date_added.isoformat().replace(
                 "+00:00", "Z"
@@ -1239,6 +1240,7 @@ class BookmarksApiTestCase(LinkdingApiTestCase, BookmarkFactoryMixin):
 
     def assertUserProfile(self, response: Response, profile: UserProfile):
         self.assertEqual(response.data["theme"], profile.theme)
+        self.assertEqual(response.data["language"], profile.language)
         self.assertEqual(
             response.data["bookmark_date_display"], profile.bookmark_date_display
         )
@@ -1273,6 +1275,7 @@ class BookmarksApiTestCase(LinkdingApiTestCase, BookmarkFactoryMixin):
 
         # update profile
         profile.theme = "dark"
+        profile.language = UserProfile.LANGUAGE_SIMPLIFIED_CHINESE
         profile.bookmark_date_display = "absolute"
         profile.bookmark_link_target = "_self"
         profile.web_archive_integration = "enabled"

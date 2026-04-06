@@ -180,6 +180,30 @@ class QueriesBasicTestCase(TestCase, BookmarkFactoryMixin):
             ],
         )
 
+    def test_query_bookmarks_should_exclude_sensitive_bookmarks(self):
+        regular_bookmark = self.setup_bookmark(title="Regular bookmark")
+        sensitive_bookmark = self.setup_bookmark(
+            title="Sensitive bookmark", sensitive=True
+        )
+
+        query = queries.query_bookmarks(self.user, self.profile, BookmarkSearch(q=""))
+
+        self.assertCountEqual(list(query), [regular_bookmark])
+        self.assertNotIn(sensitive_bookmark, query)
+
+    def test_query_sensitive_bookmarks_should_return_only_sensitive_bookmarks(self):
+        regular_bookmark = self.setup_bookmark(title="Regular bookmark")
+        sensitive_bookmark = self.setup_bookmark(
+            title="Sensitive bookmark", sensitive=True
+        )
+
+        query = queries.query_sensitive_bookmarks(
+            self.user, self.profile, BookmarkSearch(q="")
+        )
+
+        self.assertCountEqual(list(query), [sensitive_bookmark])
+        self.assertNotIn(regular_bookmark, query)
+
     def test_query_bookmarks_should_search_single_term(self):
         self.setup_bookmark_search_data()
 

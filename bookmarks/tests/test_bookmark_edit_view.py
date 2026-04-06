@@ -1,8 +1,10 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 
 from bookmarks.models import build_tag_string
+from bookmarks.services import website_loader
 from bookmarks.tests.helpers import BookmarkFactoryMixin
 
 
@@ -53,6 +55,32 @@ class BookmarkEditViewTestCase(TestCase, BookmarkFactoryMixin):
         tags = bookmark.tags.order_by("name").all()
         self.assertEqual(tags[0].name, "editedtag1")
         self.assertEqual(tags[1].name, "editedtag2")
+
+    def test_should_fetch_website_metadata_after_edit(self):
+        bookmark = self.setup_bookmark(
+            url="http://example.com/original",
+            title="",
+            description="",
+        )
+        form_data = self.create_form_data(
+            {"id": bookmark.id, "title": "", "description": ""}
+        )
+
+        with patch.object(website_loader, "load_website_metadata") as mock_load:
+            mock_load.return_value = website_loader.WebsiteMetadata(
+                url=form_data["url"],
+                title="Fetched edited title",
+                description="Fetched edited description",
+                preview_image=None,
+            )
+
+            self.client.post(
+                reverse("linkding:bookmarks.edit", args=[bookmark.id]), form_data
+            )
+
+        bookmark.refresh_from_db()
+        self.assertEqual(bookmark.title, "Fetched edited title")
+        self.assertEqual(bookmark.description, "Fetched edited description")
 
     def test_should_return_422_with_invalid_form(self):
         bookmark = self.setup_bookmark()

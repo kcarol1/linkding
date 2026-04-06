@@ -23,6 +23,7 @@ class SettingsGeneralViewTestCase(TestCase, BookmarkFactoryMixin):
             overrides = {}
         form_data = {
             "update_profile": "",
+            "language": UserProfile.LANGUAGE_ENGLISH,
             "theme": UserProfile.THEME_AUTO,
             "bookmark_date_display": UserProfile.BOOKMARK_DATE_DISPLAY_RELATIVE,
             "bookmark_description_display": UserProfile.BOOKMARK_DESCRIPTION_DISPLAY_INLINE,
@@ -95,6 +96,7 @@ class SettingsGeneralViewTestCase(TestCase, BookmarkFactoryMixin):
     def test_update_profile(self):
         form_data = {
             "update_profile": "",
+            "language": UserProfile.LANGUAGE_SIMPLIFIED_CHINESE,
             "theme": UserProfile.THEME_DARK,
             "bookmark_date_display": UserProfile.BOOKMARK_DATE_DISPLAY_HIDDEN,
             "bookmark_description_display": UserProfile.BOOKMARK_DESCRIPTION_DISPLAY_SEPARATE,
@@ -132,6 +134,7 @@ class SettingsGeneralViewTestCase(TestCase, BookmarkFactoryMixin):
         self.user.profile.refresh_from_db()
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.user.profile.language, form_data["language"])
         self.assertEqual(self.user.profile.theme, form_data["theme"])
         self.assertEqual(
             self.user.profile.bookmark_date_display, form_data["bookmark_date_display"]

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.middleware import RemoteUserMiddleware
+from django.utils import translation
 
 from bookmarks.models import GlobalSettings, UserProfile
 
@@ -29,10 +30,14 @@ class LinkdingMiddleware:
         # add user profile to request
         if request.user.is_authenticated:
             request.user_profile = request.user.profile
+            translation.activate(request.user_profile.language)
+            request.LANGUAGE_CODE = translation.get_language()
         else:
             # check if a custom profile for guests exists, otherwise use standard profile
             if global_settings.guest_profile_user:
                 request.user_profile = global_settings.guest_profile_user.profile
+                translation.activate(request.user_profile.language)
+                request.LANGUAGE_CODE = translation.get_language()
             else:
                 request.user_profile = standard_profile
 

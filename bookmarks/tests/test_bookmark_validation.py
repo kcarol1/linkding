@@ -115,3 +115,20 @@ class BookmarkValidationTestCase(TestCase, BookmarkFactoryMixin):
             else:
                 self.assertEqual(len(form.errors), 1)
                 self.assertIn("Enter a valid URL", str(form.errors))
+
+    @override_settings(LD_DISABLE_URL_VALIDATION=False)
+    def test_bookmark_form_should_extract_url_from_shared_text(self):
+        rf = RequestFactory()
+        request = rf.post(
+            "/",
+            data={
+                "url": "【科研是干出来的，不是看文献看出来的，执行力才是基础】 https://www.bilibili.com/video/BV14Z9TBNEjr/?share_source=copy_web&vd_source=206ee522c8143f8f82b131db9cfabe60"
+            },
+        )
+        form = BookmarkForm(request)
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(
+            form.cleaned_data["url"],
+            "https://www.bilibili.com/video/BV14Z9TBNEjr/?share_source=copy_web&vd_source=206ee522c8143f8f82b131db9cfabe60",
+        )

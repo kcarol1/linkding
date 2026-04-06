@@ -281,6 +281,7 @@ class BookmarkActionViewTestCase(
                 "is_archived": "on",
                 "unread": "on",
                 "shared": "on",
+                "sensitive": "on",
             },
         )
         self.assertEqual(response.status_code, 302)
@@ -289,6 +290,7 @@ class BookmarkActionViewTestCase(
         self.assertTrue(bookmark.unread)
         self.assertTrue(bookmark.is_archived)
         self.assertTrue(bookmark.shared)
+        self.assertTrue(bookmark.sensitive)
 
     def test_can_only_update_own_bookmark_state(self):
         other_user = self.setup_user()
@@ -301,6 +303,7 @@ class BookmarkActionViewTestCase(
                 "is_archived": "on",
                 "unread": "on",
                 "shared": "on",
+                "sensitive": "on",
             },
         )
         self.assertEqual(response.status_code, 404)
@@ -309,6 +312,7 @@ class BookmarkActionViewTestCase(
         self.assertFalse(bookmark.unread)
         self.assertFalse(bookmark.is_archived)
         self.assertFalse(bookmark.shared)
+        self.assertFalse(bookmark.sensitive)
 
     def test_bulk_archive(self):
         bookmark1 = self.setup_bookmark()
@@ -735,6 +739,100 @@ class BookmarkActionViewTestCase(
         self.assertFalse(Bookmark.objects.get(id=bookmark1.id).shared)
         self.assertFalse(Bookmark.objects.get(id=bookmark2.id).shared)
         self.assertFalse(Bookmark.objects.get(id=bookmark3.id).shared)
+
+    def test_bulk_mark_as_sensitive(self):
+        bookmark1 = self.setup_bookmark(sensitive=False)
+        bookmark2 = self.setup_bookmark(sensitive=False)
+        bookmark3 = self.setup_bookmark(sensitive=False)
+
+        self.client.post(
+            reverse("linkding:bookmarks.index.action"),
+            {
+                "bulk_action": ["bulk_sensitive"],
+                "bulk_execute": [""],
+                "bookmark_id": [
+                    str(bookmark1.id),
+                    str(bookmark2.id),
+                    str(bookmark3.id),
+                ],
+            },
+        )
+
+        self.assertTrue(Bookmark.objects.get(id=bookmark1.id).sensitive)
+        self.assertTrue(Bookmark.objects.get(id=bookmark2.id).sensitive)
+        self.assertTrue(Bookmark.objects.get(id=bookmark3.id).sensitive)
+
+    def test_can_only_bulk_mark_as_sensitive_own_bookmarks(self):
+        other_user = User.objects.create_user(
+            "otheruser", "otheruser@example.com", "password123"
+        )
+        bookmark1 = self.setup_bookmark(sensitive=False, user=other_user)
+        bookmark2 = self.setup_bookmark(sensitive=False, user=other_user)
+        bookmark3 = self.setup_bookmark(sensitive=False, user=other_user)
+
+        self.client.post(
+            reverse("linkding:bookmarks.index.action"),
+            {
+                "bulk_action": ["bulk_sensitive"],
+                "bulk_execute": [""],
+                "bookmark_id": [
+                    str(bookmark1.id),
+                    str(bookmark2.id),
+                    str(bookmark3.id),
+                ],
+            },
+        )
+
+        self.assertFalse(Bookmark.objects.get(id=bookmark1.id).sensitive)
+        self.assertFalse(Bookmark.objects.get(id=bookmark2.id).sensitive)
+        self.assertFalse(Bookmark.objects.get(id=bookmark3.id).sensitive)
+
+    def test_bulk_mark_as_regular(self):
+        bookmark1 = self.setup_bookmark(sensitive=True)
+        bookmark2 = self.setup_bookmark(sensitive=True)
+        bookmark3 = self.setup_bookmark(sensitive=True)
+
+        self.client.post(
+            reverse("linkding:bookmarks.sensitive.action"),
+            {
+                "bulk_action": ["bulk_unsensitive"],
+                "bulk_execute": [""],
+                "bookmark_id": [
+                    str(bookmark1.id),
+                    str(bookmark2.id),
+                    str(bookmark3.id),
+                ],
+            },
+        )
+
+        self.assertFalse(Bookmark.objects.get(id=bookmark1.id).sensitive)
+        self.assertFalse(Bookmark.objects.get(id=bookmark2.id).sensitive)
+        self.assertFalse(Bookmark.objects.get(id=bookmark3.id).sensitive)
+
+    def test_can_only_bulk_mark_as_regular_own_bookmarks(self):
+        other_user = User.objects.create_user(
+            "otheruser", "otheruser@example.com", "password123"
+        )
+        bookmark1 = self.setup_bookmark(sensitive=True, user=other_user)
+        bookmark2 = self.setup_bookmark(sensitive=True, user=other_user)
+        bookmark3 = self.setup_bookmark(sensitive=True, user=other_user)
+
+        self.client.post(
+            reverse("linkding:bookmarks.sensitive.action"),
+            {
+                "bulk_action": ["bulk_unsensitive"],
+                "bulk_execute": [""],
+                "bookmark_id": [
+                    str(bookmark1.id),
+                    str(bookmark2.id),
+                    str(bookmark3.id),
+                ],
+            },
+        )
+
+        self.assertTrue(Bookmark.objects.get(id=bookmark1.id).sensitive)
+        self.assertTrue(Bookmark.objects.get(id=bookmark2.id).sensitive)
+        self.assertTrue(Bookmark.objects.get(id=bookmark3.id).sensitive)
 
     def test_can_only_bulk_unshare_own_bookmarks(self):
         other_user = User.objects.create_user(

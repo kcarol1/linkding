@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from bookmarks.models import (
     Bookmark,
@@ -15,6 +16,7 @@ from bookmarks.models import (
     sanitize_tag_name,
 )
 from bookmarks.services.bookmarks import create_bookmark, update_bookmark
+from bookmarks.services.extension import extract_first_url, extract_share_text_metadata
 from bookmarks.type_defs import HttpRequest
 from bookmarks.validators import BookmarkURLValidator
 from bookmarks.widgets import (
@@ -30,7 +32,7 @@ from bookmarks.widgets import (
 
 class BookmarkForm(forms.ModelForm):
     # Use URLField for URL
-    url = forms.CharField(validators=[BookmarkURLValidator()], widget=FormInput)
+    url = forms.CharField(widget=FormInput)
     tag_string = forms.CharField(required=False, widget=TagAutocomplete)
     # Do not require title and description as they may be empty
     title = forms.CharField(max_length=512, required=False, widget=FormInput)
@@ -38,6 +40,7 @@ class BookmarkForm(forms.ModelForm):
     notes = forms.CharField(required=False, widget=FormTextarea)
     unread = forms.BooleanField(required=False, widget=FormCheckbox)
     shared = forms.BooleanField(required=False, widget=FormCheckbox)
+    sensitive = forms.BooleanField(required=False, widget=FormCheckbox)
     # Hidden field that determines whether to close window/tab after saving the bookmark
     auto_close = forms.CharField(required=False, widget=forms.HiddenInput)
 
@@ -51,6 +54,7 @@ class BookmarkForm(forms.ModelForm):
             "notes",
             "unread",
             "shared",
+            "sensitive",
             "auto_close",
         ]
 
@@ -68,6 +72,7 @@ class BookmarkForm(forms.ModelForm):
                 "auto_close": "auto_close" in request.GET,
                 "unread": request.user_profile.default_mark_unread,
                 "shared": request.user_profile.default_mark_shared,
+                "sensitive": False,
             }
         if instance is not None and request.method == "GET":
             initial = {"tag_string": build_tag_string(instance.tag_names, " ")}
@@ -102,7 +107,12 @@ class BookmarkForm(forms.ModelForm):
         # the form's UI. When editing a bookmark, there is no assumption that
         # it would update a different bookmark if the URL is a duplicate, so
         # raise a validation error in that case.
-        url = self.cleaned_data["url"]
+        # 先把“标题 + URL”这类分享文本提取成真实链接，再做 URL 校验。
+        url = extract_first_url(self.cleaned_data["url"])
+
+        validator = BookmarkURLValidator()
+        validator(url)
+
         if self.instance.pk:
             is_duplicate = (
                 Bookmark.query_existing(self.instance.owner, url)
@@ -113,6 +123,20 @@ class BookmarkForm(forms.ModelForm):
                 raise forms.ValidationError("A bookmark with this URL already exists.")
 
         return url
+
+    def clean(self):
+        cleaned_data = super().clean()
+        raw_url = self.data.get("url", "")
+        title = cleaned_data.get("title", "")
+        description = cleaned_data.get("description", "")
+
+        fallback_title, fallback_description = extract_share_text_metadata(raw_url)
+        if not title and fallback_title:
+            cleaned_data["title"] = fallback_title
+        if not description and fallback_description:
+            cleaned_data["description"] = fallback_description
+
+        return cleaned_data
 
 
 def convert_tag_string(tag_string: str):
@@ -247,20 +271,25 @@ class BookmarkBundleForm(forms.ModelForm):
 
 class BookmarkSearchForm(forms.Form):
     SORT_CHOICES = [
-        (BookmarkSearch.SORT_ADDED_ASC, "Added ↑"),
-        (BookmarkSearch.SORT_ADDED_DESC, "Added ↓"),
-        (BookmarkSearch.SORT_TITLE_ASC, "Title ↑"),
-        (BookmarkSearch.SORT_TITLE_DESC, "Title ↓"),
+        (BookmarkSearch.SORT_ADDED_ASC, _("Added ↑")),
+        (BookmarkSearch.SORT_ADDED_DESC, _("Added ↓")),
+        (BookmarkSearch.SORT_TITLE_ASC, _("Title ↑")),
+        (BookmarkSearch.SORT_TITLE_DESC, _("Title ↓")),
     ]
     FILTER_SHARED_CHOICES = [
-        (BookmarkSearch.FILTER_SHARED_OFF, "Off"),
-        (BookmarkSearch.FILTER_SHARED_SHARED, "Shared"),
-        (BookmarkSearch.FILTER_SHARED_UNSHARED, "Unshared"),
+        (BookmarkSearch.FILTER_SHARED_OFF, _("Off")),
+        (BookmarkSearch.FILTER_SHARED_SHARED, _("Shared")),
+        (BookmarkSearch.FILTER_SHARED_UNSHARED, _("Unshared")),
     ]
     FILTER_UNREAD_CHOICES = [
-        (BookmarkSearch.FILTER_UNREAD_OFF, "Off"),
-        (BookmarkSearch.FILTER_UNREAD_YES, "Unread"),
-        (BookmarkSearch.FILTER_UNREAD_NO, "Read"),
+        (BookmarkSearch.FILTER_UNREAD_OFF, _("Off")),
+        (BookmarkSearch.FILTER_UNREAD_YES, _("Unread")),
+        (BookmarkSearch.FILTER_UNREAD_NO, _("Read")),
+    ]
+    FILTER_SENSITIVE_CHOICES = [
+        (BookmarkSearch.FILTER_SENSITIVE_OFF, _("Off")),
+        (BookmarkSearch.FILTER_SENSITIVE_YES, _("Sensitive")),
+        (BookmarkSearch.FILTER_SENSITIVE_NO, _("Regular")),
     ]
 
     q = forms.CharField()
@@ -269,6 +298,9 @@ class BookmarkSearchForm(forms.Form):
     sort = forms.ChoiceField(choices=SORT_CHOICES, widget=FormSelect)
     shared = forms.ChoiceField(choices=FILTER_SHARED_CHOICES, widget=forms.RadioSelect)
     unread = forms.ChoiceField(choices=FILTER_UNREAD_CHOICES, widget=forms.RadioSelect)
+    sensitive = forms.ChoiceField(
+        choices=FILTER_SENSITIVE_CHOICES, widget=forms.RadioSelect
+    )
     modified_since = forms.CharField(required=False)
     added_since = forms.CharField(required=False)
 
@@ -307,6 +339,7 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [
+            "language",
             "theme",
             "bookmark_date_display",
             "bookmark_description_display",
@@ -338,6 +371,7 @@ class UserProfileForm(forms.ModelForm):
         ]
         widgets = {
             "theme": FormSelect,
+            "language": FormSelect,
             "bookmark_date_display": FormSelect,
             "bookmark_description_display": FormSelect,
             "bookmark_description_max_lines": FormNumberInput,

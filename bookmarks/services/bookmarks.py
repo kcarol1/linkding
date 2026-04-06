@@ -4,8 +4,8 @@ from django.utils import timezone
 
 from bookmarks.models import Bookmark, User, parse_tag_string
 from bookmarks.services import auto_tagging, tasks, website_loader
+from bookmarks.services.extension import extract_first_url, resolve_special_share_url
 from bookmarks.services.tags import get_or_create_tags
-from bookmarks.services.extension import extract_douyin_links
 
 logger = logging.getLogger(__name__)
 
@@ -16,36 +16,36 @@ def create_bookmark(
     current_user: User,
     disable_html_snapshot: bool = False,
 ):
-    # If URL is already bookmarked, then update it
+    # 非表单入口（例如 API）也要走同样的链接提取逻辑，避免入口行为不一致。
+    bookmark.url = resolve_special_share_url(extract_first_url(bookmark.url))
+
+    # 如果 URL 已存在，则复用已有书签并更新其内容。
     existing_bookmark: Bookmark = Bookmark.query_existing(
         current_user, bookmark.url
     ).first()
 
     if existing_bookmark is not None:
-        if extract_douyin_links(bookmark.url):
-            bookmark.url = extract_douyin_links(bookmark.url)
         _merge_bookmark_data(bookmark, existing_bookmark)
         return update_bookmark(existing_bookmark, tag_string, current_user)
 
-    # Set currently logged in user as owner
+    # 将当前登录用户设置为书签拥有者。
     bookmark.owner = current_user
-    # Set dates only if not already provided
-    # This allows to sync existing dates through the REST API for example
+    # 仅在未显式提供日期时自动补齐，便于 API 同步已有数据。
     if not bookmark.date_added:
         bookmark.date_added = timezone.now()
     if not bookmark.date_modified:
         bookmark.date_modified = timezone.now()
     bookmark.save()
-    # Update tag list
+    # 更新标签。
     _update_bookmark_tags(bookmark, tag_string, current_user)
     bookmark.save()
-    # Create snapshot on web archive
+    # 创建网页归档快照。
     tasks.create_web_archive_snapshot(current_user, bookmark, False)
-    # Load favicon
+    # 加载站点图标。
     tasks.load_favicon(current_user, bookmark)
-    # Load preview image
+    # 加载预览图。
     tasks.load_preview_image(current_user, bookmark)
-    # Create HTML snapshot
+    # 创建 HTML 快照。
     if (
         current_user.profile.enable_automatic_html_snapshots
         and not disable_html_snapshot
@@ -56,21 +56,23 @@ def create_bookmark(
 
 
 def update_bookmark(bookmark: Bookmark, tag_string, current_user: User):
-    # Detect URL change
+    # 编辑书签时也沿用同样的规范化逻辑。
+    bookmark.url = resolve_special_share_url(extract_first_url(bookmark.url))
+    # 判断 URL 是否发生变化。
     original_bookmark = Bookmark.objects.get(id=bookmark.id)
     has_url_changed = original_bookmark.url != bookmark.url
-    # Update tag list
+    # 更新标签。
     _update_bookmark_tags(bookmark, tag_string, current_user)
-    # Update dates
+    # 更新时间。
     bookmark.date_modified = timezone.now()
     bookmark.save()
-    # Update favicon
+    # 更新站点图标。
     tasks.load_favicon(current_user, bookmark)
-    # Update preview image
+    # 更新预览图。
     tasks.load_preview_image(current_user, bookmark)
 
     if has_url_changed:
-        # Update web archive snapshot, if URL changed
+        # URL 变更后同步更新网页归档快照。
         tasks.create_web_archive_snapshot(current_user, bookmark, True)
 
     return bookmark
@@ -198,6 +200,24 @@ def unshare_bookmarks(bookmark_ids: [int | str], current_user: User):
     )
 
 
+def mark_bookmarks_as_sensitive(bookmark_ids: [int | str], current_user: User):
+    sanitized_bookmark_ids = _sanitize_id_list(bookmark_ids)
+
+    # Bulk moves are implemented as a flag flip so bookmarks keep all existing
+    # metadata, tags, and archive state while switching list buckets.
+    Bookmark.objects.filter(owner=current_user, id__in=sanitized_bookmark_ids).update(
+        sensitive=True, date_modified=timezone.now()
+    )
+
+
+def mark_bookmarks_as_regular(bookmark_ids: [int | str], current_user: User):
+    sanitized_bookmark_ids = _sanitize_id_list(bookmark_ids)
+
+    Bookmark.objects.filter(owner=current_user, id__in=sanitized_bookmark_ids).update(
+        sensitive=False, date_modified=timezone.now()
+    )
+
+
 def refresh_bookmarks_metadata(bookmark_ids: [int | str], current_user: User):
     sanitized_bookmark_ids = _sanitize_id_list(bookmark_ids)
     owned_bookmarks = Bookmark.objects.filter(
@@ -224,6 +244,7 @@ def _merge_bookmark_data(from_bookmark: Bookmark, to_bookmark: Bookmark):
     to_bookmark.notes = from_bookmark.notes
     to_bookmark.unread = from_bookmark.unread
     to_bookmark.shared = from_bookmark.shared
+    to_bookmark.sensitive = from_bookmark.sensitive
 
 
 def _update_bookmark_tags(bookmark: Bookmark, tag_string: str, user: User):

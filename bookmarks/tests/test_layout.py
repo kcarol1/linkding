@@ -51,6 +51,39 @@ class LayoutTestCase(TestCase, BookmarkFactoryMixin, HtmlTestMixin):
             count=1,
         )
 
+    def test_nav_menu_should_include_sensitive_bookmarks_link(self):
+        response = self.client.get(reverse("linkding:bookmarks.index"))
+        html = response.content.decode()
+
+        self.assertInHTML(
+            f"""
+            <a href="{reverse("linkding:bookmarks.sensitive")}" class="menu-link">Sensitive</a>
+        """,
+            html,
+            count=1,
+        )
+        self.assertInHTML(
+            f"""
+            <a href="{reverse("linkding:bookmarks.sensitive")}" class="menu-link">Sensitive bookmarks</a>
+        """,
+            html,
+            count=1,
+        )
+        self.assertInHTML(
+            f"""
+            <a href="{reverse("linkding:bookmarks.archived.sensitive")}" class="menu-link">Sensitive archived</a>
+        """,
+            html,
+            count=1,
+        )
+        self.assertInHTML(
+            f"""
+            <a href="{reverse("linkding:bookmarks.archived.sensitive")}" class="menu-link">Sensitive archived bookmarks</a>
+        """,
+            html,
+            count=1,
+        )
+
     def test_metadata_should_respect_prefetch_links_setting(self):
         settings = GlobalSettings.get()
         settings.enable_link_prefetch = False

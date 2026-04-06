@@ -16,6 +16,9 @@ class BookmarkSearchFormTest(TestCase, BookmarkFactoryMixin):
         self.assertEqual(form["sort"].initial, BookmarkSearch.SORT_ADDED_DESC)
         self.assertEqual(form["shared"].initial, BookmarkSearch.FILTER_SHARED_OFF)
         self.assertEqual(form["unread"].initial, BookmarkSearch.FILTER_UNREAD_OFF)
+        self.assertEqual(
+            form["sensitive"].initial, BookmarkSearch.FILTER_SENSITIVE_OFF
+        )
 
         # with params
         bundle = self.setup_bundle()
@@ -26,6 +29,7 @@ class BookmarkSearchFormTest(TestCase, BookmarkFactoryMixin):
             bundle=bundle,
             shared=BookmarkSearch.FILTER_SHARED_SHARED,
             unread=BookmarkSearch.FILTER_UNREAD_YES,
+            sensitive=BookmarkSearch.FILTER_SENSITIVE_YES,
         )
         form = BookmarkSearchForm(search)
         self.assertEqual(form["q"].initial, "search query")
@@ -34,6 +38,9 @@ class BookmarkSearchFormTest(TestCase, BookmarkFactoryMixin):
         self.assertEqual(form["sort"].initial, BookmarkSearch.SORT_ADDED_ASC)
         self.assertEqual(form["shared"].initial, BookmarkSearch.FILTER_SHARED_SHARED)
         self.assertEqual(form["unread"].initial, BookmarkSearch.FILTER_UNREAD_YES)
+        self.assertEqual(
+            form["sensitive"].initial, BookmarkSearch.FILTER_SENSITIVE_YES
+        )
 
     def test_user_options(self):
         users = [
@@ -74,6 +81,7 @@ class BookmarkSearchFormTest(TestCase, BookmarkFactoryMixin):
             bundle=bundle,
             shared=BookmarkSearch.FILTER_SHARED_SHARED,
             unread=BookmarkSearch.FILTER_UNREAD_YES,
+            sensitive=BookmarkSearch.FILTER_SENSITIVE_YES,
         )
         form = BookmarkSearchForm(search)
         self.assertCountEqual(
@@ -85,6 +93,7 @@ class BookmarkSearchFormTest(TestCase, BookmarkFactoryMixin):
                 form["bundle"],
                 form["shared"],
                 form["unread"],
+                form["sensitive"],
             ],
         )
 

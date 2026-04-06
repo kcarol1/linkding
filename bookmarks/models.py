@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.http import QueryDict
+from django.utils.translation import gettext_lazy as _
 
 from bookmarks.utils import normalize_url, unique
 from bookmarks.validators import BookmarkURLValidator
@@ -66,6 +67,7 @@ class Bookmark(models.Model):
     unread = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
     shared = models.BooleanField(default=False)
+    sensitive = models.BooleanField(default=False)
     date_added = models.DateTimeField()
     date_modified = models.DateTimeField()
     date_accessed = models.DateTimeField(blank=True, null=True)
@@ -185,14 +187,14 @@ class BookmarkBundle(models.Model):
     FILTER_STATE_YES = "yes"
     FILTER_STATE_NO = "no"
     FILTER_UNREAD_CHOICES = [
-        (FILTER_STATE_OFF, "All"),
-        (FILTER_STATE_YES, "Unread"),
-        (FILTER_STATE_NO, "Read"),
+        (FILTER_STATE_OFF, _("All")),
+        (FILTER_STATE_YES, _("Unread")),
+        (FILTER_STATE_NO, _("Read")),
     ]
     FILTER_SHARED_CHOICES = [
-        (FILTER_STATE_OFF, "All"),
-        (FILTER_STATE_YES, "Shared"),
-        (FILTER_STATE_NO, "Unshared"),
+        (FILTER_STATE_OFF, _("All")),
+        (FILTER_STATE_YES, _("Shared")),
+        (FILTER_STATE_NO, _("Unshared")),
     ]
 
     name = models.CharField(max_length=256, blank=False)
@@ -235,6 +237,10 @@ class BookmarkSearch:
     FILTER_UNREAD_YES = "yes"
     FILTER_UNREAD_NO = "no"
 
+    FILTER_SENSITIVE_OFF = "off"
+    FILTER_SENSITIVE_YES = "yes"
+    FILTER_SENSITIVE_NO = "no"
+
     params = [
         "q",
         "user",
@@ -242,10 +248,11 @@ class BookmarkSearch:
         "sort",
         "shared",
         "unread",
+        "sensitive",
         "modified_since",
         "added_since",
     ]
-    preferences = ["sort", "shared", "unread"]
+    preferences = ["sort", "shared", "unread", "sensitive"]
     defaults = {
         "q": "",
         "user": "",
@@ -253,6 +260,7 @@ class BookmarkSearch:
         "sort": SORT_ADDED_DESC,
         "shared": FILTER_SHARED_OFF,
         "unread": FILTER_UNREAD_OFF,
+        "sensitive": FILTER_SENSITIVE_OFF,
         "modified_since": None,
         "added_since": None,
     }
@@ -265,6 +273,7 @@ class BookmarkSearch:
         sort: str = None,
         shared: str = None,
         unread: str = None,
+        sensitive: str = None,
         modified_since: str = None,
         added_since: str = None,
         preferences: dict = None,
@@ -281,6 +290,7 @@ class BookmarkSearch:
         self.sort = sort or self.defaults["sort"]
         self.shared = shared or self.defaults["shared"]
         self.unread = unread or self.defaults["unread"]
+        self.sensitive = sensitive or self.defaults["sensitive"]
         self.modified_since = modified_since or self.defaults["modified_since"]
         self.added_since = added_since or self.defaults["added_since"]
 
@@ -344,53 +354,65 @@ class BookmarkSearch:
 
 
 class UserProfile(models.Model):
+    LANGUAGE_ENGLISH = "en-us"
+    LANGUAGE_SIMPLIFIED_CHINESE = "zh-hans"
+    LANGUAGE_CHOICES = [
+        (LANGUAGE_ENGLISH, _("English")),
+        (LANGUAGE_SIMPLIFIED_CHINESE, _("Simplified Chinese")),
+    ]
     THEME_AUTO = "auto"
     THEME_LIGHT = "light"
     THEME_DARK = "dark"
     THEME_CHOICES = [
-        (THEME_AUTO, "Auto"),
-        (THEME_LIGHT, "Light"),
-        (THEME_DARK, "Dark"),
+        (THEME_AUTO, _("Auto")),
+        (THEME_LIGHT, _("Light")),
+        (THEME_DARK, _("Dark")),
     ]
     BOOKMARK_DATE_DISPLAY_RELATIVE = "relative"
     BOOKMARK_DATE_DISPLAY_ABSOLUTE = "absolute"
     BOOKMARK_DATE_DISPLAY_HIDDEN = "hidden"
     BOOKMARK_DATE_DISPLAY_CHOICES = [
-        (BOOKMARK_DATE_DISPLAY_RELATIVE, "Relative"),
-        (BOOKMARK_DATE_DISPLAY_ABSOLUTE, "Absolute"),
-        (BOOKMARK_DATE_DISPLAY_HIDDEN, "Hidden"),
+        (BOOKMARK_DATE_DISPLAY_RELATIVE, _("Relative")),
+        (BOOKMARK_DATE_DISPLAY_ABSOLUTE, _("Absolute")),
+        (BOOKMARK_DATE_DISPLAY_HIDDEN, _("Hidden")),
     ]
     BOOKMARK_DESCRIPTION_DISPLAY_INLINE = "inline"
     BOOKMARK_DESCRIPTION_DISPLAY_SEPARATE = "separate"
     BOOKMARK_DESCRIPTION_DISPLAY_CHOICES = [
-        (BOOKMARK_DESCRIPTION_DISPLAY_INLINE, "Inline"),
-        (BOOKMARK_DESCRIPTION_DISPLAY_SEPARATE, "Separate"),
+        (BOOKMARK_DESCRIPTION_DISPLAY_INLINE, _("Inline")),
+        (BOOKMARK_DESCRIPTION_DISPLAY_SEPARATE, _("Separate")),
     ]
     BOOKMARK_LINK_TARGET_BLANK = "_blank"
     BOOKMARK_LINK_TARGET_SELF = "_self"
     BOOKMARK_LINK_TARGET_CHOICES = [
-        (BOOKMARK_LINK_TARGET_BLANK, "New page"),
-        (BOOKMARK_LINK_TARGET_SELF, "Same page"),
+        (BOOKMARK_LINK_TARGET_BLANK, _("New page")),
+        (BOOKMARK_LINK_TARGET_SELF, _("Same page")),
     ]
     WEB_ARCHIVE_INTEGRATION_DISABLED = "disabled"
     WEB_ARCHIVE_INTEGRATION_ENABLED = "enabled"
     WEB_ARCHIVE_INTEGRATION_CHOICES = [
-        (WEB_ARCHIVE_INTEGRATION_DISABLED, "Disabled"),
-        (WEB_ARCHIVE_INTEGRATION_ENABLED, "Enabled"),
+        (WEB_ARCHIVE_INTEGRATION_DISABLED, _("Disabled")),
+        (WEB_ARCHIVE_INTEGRATION_ENABLED, _("Enabled")),
     ]
     TAG_SEARCH_STRICT = "strict"
     TAG_SEARCH_LAX = "lax"
     TAG_SEARCH_CHOICES = [
-        (TAG_SEARCH_STRICT, "Strict"),
-        (TAG_SEARCH_LAX, "Lax"),
+        (TAG_SEARCH_STRICT, _("Strict")),
+        (TAG_SEARCH_LAX, _("Lax")),
     ]
     TAG_GROUPING_ALPHABETICAL = "alphabetical"
     TAG_GROUPING_DISABLED = "disabled"
     TAG_GROUPING_CHOICES = [
-        (TAG_GROUPING_ALPHABETICAL, "Alphabetical"),
-        (TAG_GROUPING_DISABLED, "Disabled"),
+        (TAG_GROUPING_ALPHABETICAL, _("Alphabetical")),
+        (TAG_GROUPING_DISABLED, _("Disabled")),
     ]
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
+    language = models.CharField(
+        max_length=10,
+        choices=LANGUAGE_CHOICES,
+        blank=False,
+        default=LANGUAGE_ENGLISH,
+    )
     theme = models.CharField(
         max_length=10, choices=THEME_CHOICES, blank=False, default=THEME_AUTO
     )
@@ -540,8 +562,8 @@ class GlobalSettings(models.Model):
     LANDING_PAGE_LOGIN = "login"
     LANDING_PAGE_SHARED_BOOKMARKS = "shared_bookmarks"
     LANDING_PAGE_CHOICES = [
-        (LANDING_PAGE_LOGIN, "Login"),
-        (LANDING_PAGE_SHARED_BOOKMARKS, "Shared Bookmarks"),
+        (LANDING_PAGE_LOGIN, _("Login")),
+        (LANDING_PAGE_SHARED_BOOKMARKS, _("Shared Bookmarks")),
     ]
 
     landing_page = models.CharField(

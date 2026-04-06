@@ -1,7 +1,9 @@
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 
 from bookmarks.models import Bookmark
+from bookmarks.services import website_loader
 from bookmarks.tests.helpers import BookmarkFactoryMixin
 
 
@@ -69,6 +71,88 @@ class BookmarkNewViewTestCase(TestCase, BookmarkFactoryMixin):
 
         bookmark = Bookmark.objects.first()
         self.assertTrue(bookmark.shared)
+
+    def test_should_extract_url_from_shared_text(self):
+        form_data = self.create_form_data(
+            {
+                "url": "【科研是干出来的，不是看文献看出来的，执行力才是基础】 https://www.bilibili.com/video/BV14Z9TBNEjr/?share_source=copy_web&vd_source=206ee522c8143f8f82b131db9cfabe60"
+            }
+        )
+
+        self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.first()
+        self.assertEqual(
+            bookmark.url,
+            "https://www.bilibili.com/video/BV14Z9TBNEjr/?share_source=copy_web&vd_source=206ee522c8143f8f82b131db9cfabe60",
+        )
+
+    def test_should_extract_douyin_url_from_shared_text(self):
+        form_data = self.create_form_data(
+            {
+                "url": "2.58 复制打开抖音，看看【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#... https://v.douyin.com/0IglwfEROpY/ W@Z.Zz EUL:/ 05/27"
+            }
+        )
+
+        self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.first()
+        self.assertEqual(
+            bookmark.url,
+            "https://www.douyin.com/video/7624371408063171880?previous_page=app_code_link",
+        )
+
+    def test_should_fetch_website_metadata_after_create(self):
+        form_data = self.create_form_data({"title": "", "description": ""})
+
+        with patch.object(website_loader, "load_website_metadata") as mock_load:
+            mock_load.return_value = website_loader.WebsiteMetadata(
+                url=form_data["url"],
+                title="Fetched title",
+                description="Fetched description",
+                preview_image=None,
+            )
+
+            self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.get()
+        self.assertEqual(bookmark.title, "Fetched title")
+        self.assertEqual(bookmark.description, "Fetched description")
+
+    def test_should_use_douyin_share_text_as_fallback_metadata(self):
+        form_data = self.create_form_data(
+            {
+                "url": "2.58 复制打开抖音，看看【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#... https://v.douyin.com/0IglwfEROpY/ W@Z.Zz EUL:/ 05/27",
+                "title": "",
+                "description": "",
+            }
+        )
+
+        with (
+            patch("bookmarks.services.bookmarks.resolve_special_share_url") as mock_resolve,
+            patch.object(website_loader, "load_website_metadata") as mock_load,
+        ):
+            mock_resolve.return_value = (
+                "https://www.douyin.com/video/7624371408063171880?previous_page=app_code_link"
+            )
+            mock_load.return_value = website_loader.WebsiteMetadata(
+                url="https://www.douyin.com/video/7624371408063171880?previous_page=app_code_link",
+                title=None,
+                description=None,
+                preview_image=None,
+            )
+
+            self.client.post(reverse("linkding:bookmarks.new"), form_data)
+
+        bookmark = Bookmark.objects.get()
+        self.assertEqual(
+            bookmark.title,
+            "【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#",
+        )
+        self.assertEqual(
+            bookmark.description,
+            "【骨科医生马俊的作品】手术大小皆有风险，拼尽全力护您安全。# 手术顺利#",
+        )
 
     def test_should_prefill_url_from_url_parameter(self):
         response = self.client.get(

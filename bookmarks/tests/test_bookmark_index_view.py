@@ -56,10 +56,22 @@ class BookmarkIndexViewTestCase(
         visible_bookmarks = self.setup_numbered_bookmarks(3)
         invisible_bookmarks = [
             self.setup_bookmark(is_archived=True),
+            self.setup_bookmark(sensitive=True),
             self.setup_bookmark(user=other_user),
         ]
 
         response = self.client.get(reverse("linkding:bookmarks.index"))
+
+        self.assertVisibleBookmarks(response, visible_bookmarks)
+        self.assertInvisibleBookmarks(response, invisible_bookmarks)
+
+    def test_should_list_sensitive_bookmarks_on_sensitive_page_only(self):
+        visible_bookmarks = self.setup_numbered_bookmarks(
+            2, prefix="Sensitive Bookmark", sensitive=True
+        )
+        invisible_bookmarks = self.setup_numbered_bookmarks(2, prefix="Regular Bookmark")
+
+        response = self.client.get(reverse("linkding:bookmarks.sensitive"))
 
         self.assertVisibleBookmarks(response, visible_bookmarks)
         self.assertInvisibleBookmarks(response, invisible_bookmarks)
@@ -305,6 +317,8 @@ class BookmarkIndexViewTestCase(
             <option value="bulk_delete">Delete</option>
             <option value="bulk_tag">Add tags</option>
             <option value="bulk_untag">Remove tags</option>
+            <option value="bulk_sensitive">Mark as sensitive</option>
+            <option value="bulk_unsensitive">Mark as regular</option>
             <option value="bulk_read">Mark as read</option>
             <option value="bulk_unread">Mark as unread</option>
             <option value="bulk_refresh">Refresh from website</option>
@@ -326,6 +340,8 @@ class BookmarkIndexViewTestCase(
             <option value="bulk_delete">Delete</option>
             <option value="bulk_tag">Add tags</option>
             <option value="bulk_untag">Remove tags</option>
+            <option value="bulk_sensitive">Mark as sensitive</option>
+            <option value="bulk_unsensitive">Mark as regular</option>
             <option value="bulk_read">Mark as read</option>
             <option value="bulk_unread">Mark as unread</option>
             <option value="bulk_refresh">Refresh from website</option>
@@ -351,6 +367,8 @@ class BookmarkIndexViewTestCase(
             <option value="bulk_delete">Delete</option>
             <option value="bulk_tag">Add tags</option>
             <option value="bulk_untag">Remove tags</option>
+            <option value="bulk_sensitive">Mark as sensitive</option>
+            <option value="bulk_unsensitive">Mark as regular</option>
             <option value="bulk_read">Mark as read</option>
             <option value="bulk_unread">Mark as unread</option>
             <option value="bulk_share">Share</option>
@@ -378,6 +396,8 @@ class BookmarkIndexViewTestCase(
             <option value="bulk_delete">Delete</option>
             <option value="bulk_tag">Add tags</option>
             <option value="bulk_untag">Remove tags</option>
+            <option value="bulk_sensitive">Mark as sensitive</option>
+            <option value="bulk_unsensitive">Mark as regular</option>
             <option value="bulk_read">Mark as read</option>
             <option value="bulk_unread">Mark as unread</option>
             <option value="bulk_share">Share</option>
@@ -455,6 +475,7 @@ class BookmarkIndexViewTestCase(
                 "sort": BookmarkSearch.SORT_ADDED_DESC,
                 "shared": BookmarkSearch.FILTER_SHARED_OFF,
                 "unread": BookmarkSearch.FILTER_UNREAD_OFF,
+                "sensitive": BookmarkSearch.FILTER_SENSITIVE_OFF,
             },
         )
 
@@ -473,6 +494,7 @@ class BookmarkIndexViewTestCase(
                 "sort": BookmarkSearch.SORT_TITLE_ASC,
                 "shared": BookmarkSearch.FILTER_SHARED_OFF,
                 "unread": BookmarkSearch.FILTER_UNREAD_OFF,
+                "sensitive": BookmarkSearch.FILTER_SENSITIVE_OFF,
             },
         )
 
@@ -492,6 +514,7 @@ class BookmarkIndexViewTestCase(
                 "sort": BookmarkSearch.SORT_TITLE_ASC,
                 "shared": BookmarkSearch.FILTER_SHARED_OFF,
                 "unread": BookmarkSearch.FILTER_UNREAD_YES,
+                "sensitive": BookmarkSearch.FILTER_SENSITIVE_OFF,
             },
         )
 
@@ -510,6 +533,7 @@ class BookmarkIndexViewTestCase(
                 "sort": BookmarkSearch.SORT_ADDED_DESC,
                 "shared": BookmarkSearch.FILTER_SHARED_OFF,
                 "unread": BookmarkSearch.FILTER_UNREAD_YES,
+                "sensitive": BookmarkSearch.FILTER_SENSITIVE_OFF,
             },
         )
 
@@ -531,6 +555,7 @@ class BookmarkIndexViewTestCase(
                 "sort": BookmarkSearch.SORT_TITLE_ASC,
                 "shared": BookmarkSearch.FILTER_SHARED_OFF,
                 "unread": BookmarkSearch.FILTER_UNREAD_OFF,
+                "sensitive": BookmarkSearch.FILTER_SENSITIVE_OFF,
             },
         )
 
