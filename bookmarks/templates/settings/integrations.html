@@ -205,13 +205,11 @@
           {% blocktrans %}A <code>shared</code> parameter for filtering for shared or unshared bookmarks. Use <code>yes</code> for shared bookmarks and <code>no</code> for unshared bookmarks.{% endblocktrans %}
         </li>
       </ul>
+      {% url 'admin:bookmarks_feedtoken_changelist' as feed_token_admin_url %}
       <p>
-        <strong>Please note that these URLs include an authentication token that should be treated like any other
-        credential.</strong>
-        Any party with access to these URLs can read all your bookmarks.
-        If you think that a URL was compromised you can delete the feed token for your user in the <a target="_blank"
-    href="{% url 'admin:bookmarks_feedtoken_changelist' %}">admin panel</a>.
-        After deleting the feed token, new URLs will be generated when you reload this settings page.
+        {% blocktrans trimmed with admin_url=feed_token_admin_url %}
+        <strong>Please note that these URLs include an authentication token that should be treated like any other credential.</strong> Any party with access to these URLs can read all your bookmarks. If you think that a URL was compromised you can delete the feed token for your user in the <a target="_blank" href="{{ admin_url }}">admin panel</a>. After deleting the feed token, new URLs will be generated when you reload this settings page.
+        {% endblocktrans %}
       </p>
     </section>
   </main>

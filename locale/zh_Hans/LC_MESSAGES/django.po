@@ -334,6 +334,104 @@ msgstr "管理集合"
 msgid "Create bundle from search"
 msgstr "根据搜索创建集合"
 
+#: bookmarks/templates/bundles/index.html:4
+msgid "Bundles - Linkding"
+msgstr "集合 - Linkding"
+
+#: bookmarks/templates/bundles/index.html:10
+msgid "Add bundle"
+msgstr "添加集合"
+
+#: bookmarks/templates/bundles/index.html:54
+msgid "You have no bundles yet"
+msgstr "你还没有集合"
+
+#: bookmarks/templates/bundles/index.html:55
+msgid "Create your first bundle to get started"
+msgstr "创建你的第一个集合以开始使用"
+
+#: bookmarks/templates/bundles/new.html:4
+msgid "New bundle - Linkding"
+msgstr "新建集合 - Linkding"
+
+#: bookmarks/templates/bundles/new.html:9
+msgid "New bundle"
+msgstr "新建集合"
+
+#: bookmarks/templates/bundles/new.html:20
+#: bookmarks/templates/bundles/edit.html:21
+msgid "Preview"
+msgstr "预览"
+
+#: bookmarks/templates/bundles/edit.html:4
+msgid "Edit bundle - Linkding"
+msgstr "编辑集合 - Linkding"
+
+#: bookmarks/templates/bundles/edit.html:9
+msgid "Edit bundle"
+msgstr "编辑集合"
+
+#: bookmarks/templates/bundles/form.html:4
+msgid "Name"
+msgstr "名称"
+
+#: bookmarks/templates/bundles/form.html:8
+msgid "Search terms"
+msgstr "搜索词"
+
+#: bookmarks/templates/bundles/form.html:15
+msgid "All of these search terms must be present in a bookmark to match."
+msgstr "书签需包含所有这些搜索词才会匹配。"
+
+#: bookmarks/templates/bundles/form.html:19
+msgid "Tags"
+msgstr "标签"
+
+#: bookmarks/templates/bundles/form.html:23
+msgid "At least one of these tags must be present in a bookmark to match."
+msgstr "书签需包含至少一个标签才会匹配。"
+
+#: bookmarks/templates/bundles/form.html:27
+msgid "Required tags"
+msgstr "必需标签"
+
+#: bookmarks/templates/bundles/form.html:31
+msgid "All of these tags must be present in a bookmark to match."
+msgstr "书签需包含所有这些标签才会匹配。"
+
+#: bookmarks/templates/bundles/form.html:35
+msgid "Excluded tags"
+msgstr "排除的标签"
+
+#: bookmarks/templates/bundles/form.html:39
+msgid "None of these tags must be present in a bookmark to match."
+msgstr "书签不得包含这些标签才会匹配。"
+
+#: bookmarks/templates/bundles/form.html:43
+msgid "Reading State"
+msgstr "阅读状态"
+
+#: bookmarks/templates/bundles/form.html:47
+msgid "Limit matches to unread or read bookmarks."
+msgstr "限制匹配为未读或已读书签。"
+
+#: bookmarks/templates/bundles/form.html:51
+msgid "Sharing State"
+msgstr "共享状态"
+
+#: bookmarks/templates/bundles/form.html:55
+msgid "Limit matches to shared or unshared bookmarks."
+msgstr "限制匹配为已共享或未共享书签。"
+
+#: bookmarks/templates/bundles/preview.html:4
+msgid "No bookmarks match the current bundle."
+msgstr "当前集合没有匹配的书签。"
+
+#: bookmarks/templates/bundles/preview.html:7
+#, python-format
+msgid "Found %(bookmark_list.bookmarks_total)s bookmarks matching this bundle."
+msgstr "找到 %(bookmark_list.bookmarks_total)s 个书签匹配此集合。"
+
 #: bookmarks/templates/bookmarks/details/form.html:30
 msgid "Reader mode"
 msgstr "阅读模式"
@@ -1101,14 +1199,12 @@ msgid "The following URLs provide RSS feeds for your bookmarks:"
 msgstr "以下链接提供你的书签 RSS 订阅："
 
 #: bookmarks/templates/settings/integrations.html:179
-#| msgid "Add bookmark"
 msgid "All bookmarks"
-msgstr "添加收藏"
+msgstr "所有书签"
 
 #: bookmarks/templates/settings/integrations.html:182
-#| msgid "Shared bookmarks"
 msgid "Unread bookmarks"
-msgstr "共享书签"
+msgstr "未读书签"
 
 #: bookmarks/templates/settings/integrations.html:185
 #: bookmarks/templates/shared/nav_menu.html:94 bookmarks/views/contexts.py:334
@@ -1129,6 +1225,17 @@ msgstr "公开共享订阅不含鉴权令牌，可与他人分享；仅包含明
 #: bookmarks/templates/settings/integrations.html:193
 msgid "All URLs support the following URL parameters:"
 msgstr "所有订阅链接支持以下参数："
+
+#: bookmarks/templates/settings/integrations.html:210
+msgid ""
+"<strong>Please note that these URLs include an authentication token that "
+"should be treated like any other credential.</strong> Any party with access "
+"to these URLs can read all your bookmarks. If you think that a URL was "
+"compromised you can delete the feed token for your user in the <a target="
+"\"_blank\" href=\"%(admin_url)s\">admin panel</a>. After deleting the feed "
+"token, new URLs will be generated when you reload this settings page."
+msgstr ""
+"<strong>请注意，这些 URL 包含一个应与其他凭据同等对待的认证令牌。</strong> 任何拥有这些 URL 的人都能读取你所有的书签。如果你认为某个 URL 已泄露，可以在<a target=\"_blank\" href=\"%(admin_url)s\">管理后台</a>删除你的订阅令牌。删除订阅令牌后，重新加载此设置页面会生成新的 URL。"
 
 #: bookmarks/templates/settings/integrations.html:196
 msgid ""
